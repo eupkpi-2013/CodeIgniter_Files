@@ -7,5 +7,5 @@ class KPI_Controller extends CI_Controller {
 		$this->load->model('KPI_model');
 	}
 
-		
+		//asdfg
 }
