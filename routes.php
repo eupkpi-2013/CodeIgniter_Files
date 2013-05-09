@@ -37,11 +37,15 @@
 | in the URL cannot be matched to a valid route.
 |
 */
-
-$route['(:any)'] = 'kpi/view/$1';
-
-// $route['default_controller'] = "welcome";
-// $route['404_override'] = '';
+$route['user_rate.html'] = "";
+$route['auditor'] = "user/view/auditor_home";
+$route['user'] = "user/view/user_home";
+$route['rate'] = "user/viewmetric";
+$route['verify'] = "user/viewaccountid";
+$route['auditor_verify'] = "user/viewuser";
+$route['default_controller'] = "welcome";
+$route['404_override'] = '';
+$route['(:any)'] = 'user/view/$1';
 
 
 
