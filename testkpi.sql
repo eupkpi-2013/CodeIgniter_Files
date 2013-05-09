@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: May 09, 2013 at 05:06 AM
+-- Generation Time: May 09, 2013 at 05:27 AM
 -- Server version: 5.5.27
 -- PHP Version: 5.4.7
 
@@ -48,9 +48,12 @@ CREATE TABLE IF NOT EXISTS `field_values` (
   `value` varchar(100) NOT NULL,
   `user_id` int(11) NOT NULL,
   `value_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `tag` text NOT NULL,
+  `results_id` int(11) NOT NULL,
   PRIMARY KEY (`value_id`),
   KEY `field_id` (`field_id`),
-  KEY `user_id` (`user_id`)
+  KEY `user_id` (`user_id`),
+  KEY `results_id` (`results_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -125,6 +128,18 @@ CREATE TABLE IF NOT EXISTS `projects` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `results`
+--
+
+CREATE TABLE IF NOT EXISTS `results` (
+  `results_id` int(11) NOT NULL AUTO_INCREMENT,
+  `results_name` text NOT NULL,
+  PRIMARY KEY (`results_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `updates`
 --
 
@@ -168,6 +183,7 @@ ALTER TABLE `fields`
 -- Constraints for table `field_values`
 --
 ALTER TABLE `field_values`
+  ADD CONSTRAINT `field_values_ibfk_3` FOREIGN KEY (`results_id`) REFERENCES `results` (`results_id`),
   ADD CONSTRAINT `field_values_ibfk_1` FOREIGN KEY (`field_id`) REFERENCES `fields` (`field_id`),
   ADD CONSTRAINT `field_values_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
 
