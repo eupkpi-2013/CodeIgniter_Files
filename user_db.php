@@ -56,8 +56,22 @@
 			$trash = strtok("_");
 			$userid = strtok("_");
 			
-			$query = $this->db->get_where('field_values', array('user_id'=> $userid));
+			
+			$query = $this->db->get_where('field_values', array('user_id'=> $userid, 'active'=> 1));
 			return $query->result_array();
 		}
+		
+		public function allmetric()
+		{
+			$query = $this->db->order_by('field_id', 'asc')->get('fields');
+			return $query->result_array();
+		}
+		
+		public function updates($iscu_id)
+		{
+			$query = $this->db->get_where('updates', array('iscu_id'=> $iscu_id));
+			return $query->result_array();
+		}
+		
 	}
 ?>

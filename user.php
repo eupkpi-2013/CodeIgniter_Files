@@ -20,9 +20,11 @@ class User extends CI_Controller {
 		
 		//$data['title'] = ucfirst($page);
 		
+		$iscu_id = 1001;
+		
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
-		$data['metric'] = array("<h2>eUP KPI: After 2 months</h2>","<p>Choose a KPI on the left.</p><br>","<button>View your previous ratings</button>");
+		$data['update'] = $this->user_db->updates($iscu_id);
 		$data['checker'] = "empty";
 		
 		$user = strtok($page, "_");
@@ -73,7 +75,10 @@ class User extends CI_Controller {
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['userid'] = $this->user_db->sidebar_verify();
+		$data['metric'] = $this->user_db->allmetric();
 		$data['verifyvalue'] = $this->user_db->verify_value($q);
 		$data['checker'] = "notempty";
 		
