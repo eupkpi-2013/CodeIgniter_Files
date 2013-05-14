@@ -46,7 +46,7 @@
 		
 		public function sidebar_verify()
 		{
-				$query = $this->db->get_where('field_values', array('tag'=> 'unverified', 'active'=> 1));
+				$query = $this->db->get_where('field_values', array('tag'=> 'unverified'));
 				return $query->result_array();
 		}
 		
@@ -57,7 +57,13 @@
 			$userid = strtok("_");
 			
 			
-			$query = $this->db->get_where('field_values', array('user_id'=> $userid, 'active'=> 1));
+			$query = $this->db->get_where('field_values', array('user_id'=> $userid));
+			return $query->result_array();
+		}
+		
+		public function results_value()
+		{
+			$query = $this->db->get_where('results', array('active'=> 1));
 			return $query->result_array();
 		}
 		
@@ -71,6 +77,11 @@
 		{
 			$query = $this->db->get_where('updates', array('iscu_id'=> $iscu_id));
 			return $query->result_array();
+		}
+		
+		public function javascript()
+		{
+			$query = $this->db->get('fields');
 		}
 		
 	}

@@ -59,6 +59,7 @@ class User extends CI_Controller {
 			$user = strtok($page, "_");
 			
 			$data['userid'] = $this->user_db->sidebar_verify();
+			$data['results'] = $this->user_db->results_value();
 			$data['checker'] = "empty";
 			
 			$this->load->view('kpi/header');
@@ -80,6 +81,7 @@ class User extends CI_Controller {
 		$data['userid'] = $this->user_db->sidebar_verify();
 		$data['metric'] = $this->user_db->allmetric();
 		$data['verifyvalue'] = $this->user_db->verify_value($q);
+		$data['results'] = $this->user_db->results_value();
 		$data['checker'] = "notempty";
 		
 		$this->load->view('kpi/header');
