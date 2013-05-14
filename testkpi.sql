@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: May 09, 2013 at 06:32 AM
+-- Generation Time: May 14, 2013 at 04:13 AM
 -- Server version: 5.5.27
 -- PHP Version: 5.4.7
 
@@ -23,6 +23,30 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `accounts`
+--
+
+CREATE TABLE IF NOT EXISTS `accounts` (
+  `account_id` int(11) NOT NULL AUTO_INCREMENT,
+  `project_id` int(11) NOT NULL,
+  `account_name` text NOT NULL,
+  PRIMARY KEY (`account_id`),
+  KEY `project_id` (`project_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+
+--
+-- Dumping data for table `accounts`
+--
+
+INSERT INTO `accounts` (`account_id`, `project_id`, `account_name`) VALUES
+(1, 1, 'superuser'),
+(2, 1, 'subsuperuser'),
+(3, 1, 'auditor'),
+(4, 1, 'boss');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `fields`
 --
 
@@ -31,6 +55,7 @@ CREATE TABLE IF NOT EXISTS `fields` (
   `kpi_id` int(11) NOT NULL,
   `field_name` varchar(100) NOT NULL,
   `type` varchar(100) NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`field_id`),
   KEY `kpi_id` (`kpi_id`),
   KEY `field_id` (`field_id`)
@@ -40,68 +65,75 @@ CREATE TABLE IF NOT EXISTS `fields` (
 -- Dumping data for table `fields`
 --
 
-INSERT INTO `fields` (`field_id`, `kpi_id`, `field_name`, `type`) VALUES
-(1, 9, 'No. of standard processes per core system across all CU''s', 'int'),
-(2, 10, 'No. of students doing transactions online', 'int'),
-(3, 10, 'No. of processes online', 'int'),
-(4, 11, 'No. of Faculty doing transactions online', 'int'),
-(5, 11, 'No. of Admin staff and REPS doing transactions online', 'int'),
-(6, 11, 'Total alumni transactions done online', 'int'),
-(7, 12, 'Total processing per major transactinos', 'int'),
-(8, 13, 'No. of paper based transactions done online per system', 'int'),
-(9, 14, 'No. of Campuses accessed to online journals per CU', 'int'),
-(10, 15, 'No. of CUs with ICT tools in Research Laboratories', 'int'),
-(11, 15, 'No. of Highschool teachers that integrate IT in their classes', 'int'),
-(12, 15, 'No. of highschools using ICT Tools', 'int'),
-(13, 15, 'No. of ICT equipments in K+12 laboratory schools', 'int'),
-(14, 16, 'No. of transaction volume per admin per system quarterly', 'int'),
-(15, 17, 'No. of faculty using ICT in teaching per CU', 'int'),
-(16, 17, 'No. of faculty using ICT in research per CU', 'int'),
-(17, 18, 'No. of Admin staff using ICT per CU', 'int'),
-(18, 18, 'No. of REPS using ICT per CU', 'int'),
-(19, 19, 'No. of students accessing online learning portals per CU', 'int'),
-(20, 20, 'No. of school services across CU', 'int'),
-(21, 20, 'No. of campuses using shared services (google docs, moodle) per CU', 'int'),
-(22, 21, 'Total no. of standard reports per system', 'int'),
-(23, 21, 'Total no. of Standard Documents (Records and Registries)', 'int'),
-(24, 21, 'Total no. of standard dictionary being used per system', 'int'),
-(25, 21, 'Total no. of standard forms per system. (e.g. for students academics, # of standard change Mat forms', 'int'),
-(26, 22, 'No. of portals using Content Management System (CMS) per CU', 'int'),
-(27, 22, 'No. of available centralized portales per CU', 'int'),
-(28, 23, 'Total no. of donors using online system', 'int'),
-(29, 24, 'Total Expenditures per Cost Center/Year', 'int'),
-(30, 24, 'Annual allocated budget per cost center', 'int'),
-(31, 24, 'Savings per Cost Center per Annum', 'int'),
-(32, 24, 'Income generated per cost centers per annum', 'int'),
-(33, 25, 'Time to generate a specific report requested by higher officials', 'int'),
-(34, 26, 'No. of available dashboards for officials', 'int'),
-(35, 27, 'Total no. of reports available per system', 'int'),
-(36, 27, 'Total no. of data centers across all CUs', 'int'),
-(37, 28, 'Total no. of PCs available to stakeholders per CU', 'int'),
-(38, 28, 'Improvement of Bandwidth to all stakeholders (student, faculty, officials, academic community, and o', 'int'),
-(39, 28, 'No. of servers housed per CU', 'int'),
-(40, 28, 'No. of server rooms per Campus', 'int'),
-(41, 29, 'Clearly defined plantilla of all ICT personell per CU', 'int'),
-(42, 29, 'Clearly defined plantilla of personnel doing ICT work per CU', 'int');
+INSERT INTO `fields` (`field_id`, `kpi_id`, `field_name`, `type`, `active`) VALUES
+(1, 9, 'No. of standard processes per core system across all CU''s', 'int', 1),
+(2, 10, 'No. of students doing transactions online', 'int', 1),
+(3, 10, 'No. of processes online', 'int', 1),
+(4, 11, 'No. of Faculty doing transactions online', 'int', 1),
+(5, 11, 'No. of Admin staff and REPS doing transactions online', 'int', 1),
+(6, 11, 'Total alumni transactions done online', 'int', 1),
+(7, 12, 'Total processing per major transactinos', 'int', 1),
+(8, 13, 'No. of paper based transactions done online per system', 'int', 1),
+(9, 14, 'No. of Campuses accessed to online journals per CU', 'int', 1),
+(10, 15, 'No. of CUs with ICT tools in Research Laboratories', 'int', 1),
+(11, 15, 'No. of Highschool teachers that integrate IT in their classes', 'int', 1),
+(12, 15, 'No. of highschools using ICT Tools', 'int', 1),
+(13, 15, 'No. of ICT equipments in K+12 laboratory schools', 'int', 1),
+(14, 16, 'No. of transaction volume per admin per system quarterly', 'int', 1),
+(15, 17, 'No. of faculty using ICT in teaching per CU', 'int', 1),
+(16, 17, 'No. of faculty using ICT in research per CU', 'int', 1),
+(17, 18, 'No. of Admin staff using ICT per CU', 'int', 1),
+(18, 18, 'No. of REPS using ICT per CU', 'int', 1),
+(19, 19, 'No. of students accessing online learning portals per CU', 'int', 1),
+(20, 20, 'No. of school services across CU', 'int', 1),
+(21, 20, 'No. of campuses using shared services (google docs, moodle) per CU', 'int', 1),
+(22, 21, 'Total no. of standard reports per system', 'int', 1),
+(23, 21, 'Total no. of Standard Documents (Records and Registries)', 'int', 1),
+(24, 21, 'Total no. of standard dictionary being used per system', 'int', 1),
+(25, 21, 'Total no. of standard forms per system. (e.g. for students academics, # of standard change Mat forms', 'int', 1),
+(26, 22, 'No. of portals using Content Management System (CMS) per CU', 'int', 1),
+(27, 22, 'No. of available centralized portales per CU', 'int', 1),
+(28, 23, 'Total no. of donors using online system', 'int', 1),
+(29, 24, 'Total Expenditures per Cost Center/Year', 'int', 1),
+(30, 24, 'Annual allocated budget per cost center', 'int', 1),
+(31, 24, 'Savings per Cost Center per Annum', 'int', 1),
+(32, 24, 'Income generated per cost centers per annum', 'int', 1),
+(33, 25, 'Time to generate a specific report requested by higher officials', 'int', 1),
+(34, 26, 'No. of available dashboards for officials', 'int', 1),
+(35, 27, 'Total no. of reports available per system', 'int', 1),
+(36, 27, 'Total no. of data centers across all CUs', 'int', 1),
+(37, 28, 'Total no. of PCs available to stakeholders per CU', 'int', 1),
+(38, 28, 'Improvement of Bandwidth to all stakeholders (student, faculty, officials, academic community, and o', 'int', 1),
+(39, 28, 'No. of servers housed per CU', 'int', 1),
+(40, 28, 'No. of server rooms per Campus', 'int', 1),
+(41, 29, 'Clearly defined plantilla of all ICT personell per CU', 'int', 1),
+(42, 29, 'Clearly defined plantilla of personnel doing ICT work per CU', 'int', 1);
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `field_values`
+-- Table structure for table `field_value`
 --
 
-CREATE TABLE IF NOT EXISTS `field_values` (
-  `value_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS `field_value` (
+  `value_id` int(11) NOT NULL,
   `field_id` int(11) NOT NULL,
-  `value` varchar(100) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `value_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `tag` text NOT NULL,
-  `results_id` int(11) NOT NULL,
-  PRIMARY KEY (`value_id`),
-  KEY `field_id` (`field_id`),
-  KEY `user_id` (`user_id`),
-  KEY `results_id` (`results_id`)
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY `value_id` (`value_id`,`field_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `files`
+--
+
+CREATE TABLE IF NOT EXISTS `files` (
+  `file_id` int(11) NOT NULL AUTO_INCREMENT,
+  `filename` text NOT NULL,
+  `output_id` int(11) NOT NULL,
+  PRIMARY KEY (`file_id`),
+  KEY `output_id` (`output_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -112,10 +144,20 @@ CREATE TABLE IF NOT EXISTS `field_values` (
 
 CREATE TABLE IF NOT EXISTS `iscu` (
   `iscu_id` int(11) NOT NULL AUTO_INCREMENT,
+  `project_id` int(11) NOT NULL,
   `iscu` varchar(100) NOT NULL,
   PRIMARY KEY (`iscu_id`),
-  KEY `info_sys` (`iscu`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+  KEY `info_sys` (`iscu`),
+  KEY `project_id` (`project_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1002 ;
+
+--
+-- Dumping data for table `iscu`
+--
+
+INSERT INTO `iscu` (`iscu_id`, `project_id`, `iscu`) VALUES
+(1, 1, 'admin'),
+(1001, 1, 'sample');
 
 -- --------------------------------------------------------
 
@@ -128,6 +170,18 @@ CREATE TABLE IF NOT EXISTS `iscu_field` (
   `field_id` int(11) NOT NULL,
   KEY `iscu_id` (`iscu_id`,`field_id`),
   KEY `field_id` (`field_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `iscu_updates`
+--
+
+CREATE TABLE IF NOT EXISTS `iscu_updates` (
+  `iscu_id` int(11) NOT NULL,
+  `updates_id` int(11) NOT NULL,
+  KEY `iscu_id` (`iscu_id`,`updates_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -156,7 +210,7 @@ INSERT INTO `kpi` (`kpi_id`, `project_id`, `kpi_name`, `leaf_node`, `parent_kpi`
 (3, 1, 'Optimal Utilization of ICT Resources', 0, 0),
 (4, 1, 'Increased Productivity', 0, 0),
 (5, 1, 'Extensive Sharing of Information', 0, 0),
-(6, 1, 'Increased Savings/Revenue', 0, 0),
+(6, 1, 'Increased Savings and Revenue', 0, 0),
 (7, 1, 'Improved Decision Making Capability', 0, 0),
 (8, 1, 'Improve ICT Infrastructure', 0, 0),
 (9, 1, 'Process Standardization across Constituent Universities', 1, 1),
@@ -189,12 +243,24 @@ INSERT INTO `kpi` (`kpi_id`, `project_id`, `kpi_name`, `leaf_node`, `parent_kpi`
 
 CREATE TABLE IF NOT EXISTS `output` (
   `output_id` int(11) NOT NULL AUTO_INCREMENT,
-  `kpi_id` int(11) NOT NULL,
   `output_name` varchar(100) NOT NULL,
   `done` tinyint(1) DEFAULT NULL,
+  `project_id` int(11) NOT NULL,
   PRIMARY KEY (`output_id`),
-  KEY `kpi_id` (`kpi_id`)
+  KEY `project_id` (`project_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `output_results`
+--
+
+CREATE TABLE IF NOT EXISTS `output_results` (
+  `output_id` int(11) NOT NULL,
+  `results_id` int(11) NOT NULL,
+  KEY `output_id` (`output_id`,`results_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -224,8 +290,18 @@ INSERT INTO `projects` (`project_id`, `project_name`) VALUES
 CREATE TABLE IF NOT EXISTS `results` (
   `results_id` int(11) NOT NULL AUTO_INCREMENT,
   `results_name` text NOT NULL,
-  PRIMARY KEY (`results_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+  `active` tinyint(1) NOT NULL DEFAULT '0',
+  `project_id` int(11) NOT NULL,
+  PRIMARY KEY (`results_id`),
+  KEY `project_id` (`project_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+
+--
+-- Dumping data for table `results`
+--
+
+INSERT INTO `results` (`results_id`, `results_name`, `active`, `project_id`) VALUES
+(1, 'baseline', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -235,10 +311,8 @@ CREATE TABLE IF NOT EXISTS `results` (
 
 CREATE TABLE IF NOT EXISTS `updates` (
   `update_id` int(11) NOT NULL AUTO_INCREMENT,
-  `iscu_id` int(11) DEFAULT NULL,
   `update_value` varchar(100) DEFAULT NULL,
-  PRIMARY KEY (`update_id`),
-  KEY `iscu_id` (`iscu_id`)
+  PRIMARY KEY (`update_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -249,19 +323,65 @@ CREATE TABLE IF NOT EXISTS `updates` (
 
 CREATE TABLE IF NOT EXISTS `users` (
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
-  `project_id` int(11) NOT NULL,
-  `iscu_id` int(11) NOT NULL,
+  `iscu_id` int(11) DEFAULT NULL,
+  `account_id` int(11) DEFAULT NULL,
   `email` varchar(100) NOT NULL,
-  `name` text NOT NULL,
+  `fname` text NOT NULL,
+  `lname` text NOT NULL,
+  `status_id` int(11) NOT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `email` (`email`),
-  KEY `project_id` (`project_id`),
-  KEY `info_sys` (`iscu_id`)
+  UNIQUE KEY `email_4` (`email`),
+  KEY `info_sys` (`iscu_id`),
+  KEY `email_2` (`email`),
+  KEY `email_3` (`email`),
+  KEY `account_id` (`account_id`),
+  KEY `status_id` (`status_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `iscu_id`, `account_id`, `email`, `fname`, `lname`, `status_id`) VALUES
+(1, 1, 1, 'jasper.cacbay@gmail.com', 'Jasper', 'Cacbay', 0),
+(2, NULL, NULL, 'testkpi123@gmail.com', 'Test', 'User', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_status`
+--
+
+CREATE TABLE IF NOT EXISTS `user_status` (
+  `status_id` int(11) NOT NULL AUTO_INCREMENT,
+  `status_name` int(11) NOT NULL,
+  PRIMARY KEY (`status_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `values`
+--
+
+CREATE TABLE IF NOT EXISTS `values` (
+  `value_id` int(11) NOT NULL AUTO_INCREMENT,
+  `value` text NOT NULL,
+  `results_id` int(11) NOT NULL,
+  PRIMARY KEY (`value_id`),
+  KEY `results_id` (`results_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `accounts`
+--
+ALTER TABLE `accounts`
+  ADD CONSTRAINT `accounts_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`);
 
 --
 -- Constraints for table `fields`
@@ -270,12 +390,10 @@ ALTER TABLE `fields`
   ADD CONSTRAINT `fields_ibfk_1` FOREIGN KEY (`kpi_id`) REFERENCES `kpi` (`kpi_id`);
 
 --
--- Constraints for table `field_values`
+-- Constraints for table `files`
 --
-ALTER TABLE `field_values`
-  ADD CONSTRAINT `field_values_ibfk_3` FOREIGN KEY (`results_id`) REFERENCES `results` (`results_id`),
-  ADD CONSTRAINT `field_values_ibfk_1` FOREIGN KEY (`field_id`) REFERENCES `fields` (`field_id`),
-  ADD CONSTRAINT `field_values_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+ALTER TABLE `files`
+  ADD CONSTRAINT `files_ibfk_1` FOREIGN KEY (`output_id`) REFERENCES `output` (`output_id`);
 
 --
 -- Constraints for table `iscu_field`
@@ -294,20 +412,14 @@ ALTER TABLE `kpi`
 -- Constraints for table `output`
 --
 ALTER TABLE `output`
-  ADD CONSTRAINT `output_ibfk_1` FOREIGN KEY (`kpi_id`) REFERENCES `kpi` (`kpi_id`);
-
---
--- Constraints for table `updates`
---
-ALTER TABLE `updates`
-  ADD CONSTRAINT `updates_ibfk_1` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`);
+  ADD CONSTRAINT `output_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`);
 
 --
 -- Constraints for table `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`project_id`) REFERENCES `projects` (`project_id`),
-  ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`);
+  ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`),
+  ADD CONSTRAINT `users_ibfk_5` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`) ON DELETE NO ACTION;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
