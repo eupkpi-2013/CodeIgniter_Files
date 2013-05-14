@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: May 14, 2013 at 04:40 AM
+-- Generation Time: May 14, 2013 at 10:16 AM
 -- Server version: 5.5.27
 -- PHP Version: 5.4.7
 
@@ -29,21 +29,22 @@ SET time_zone = "+00:00";
 CREATE TABLE IF NOT EXISTS `accounts` (
   `account_id` int(11) NOT NULL AUTO_INCREMENT,
   `project_id` int(11) NOT NULL,
-  `account_name` text NOT NULL,
+  `account_name` varchar(100) NOT NULL,
   PRIMARY KEY (`account_id`),
+  UNIQUE KEY `account_name` (`account_name`),
   KEY `project_id` (`project_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9 ;
 
 --
 -- Dumping data for table `accounts`
 --
 
 INSERT INTO `accounts` (`account_id`, `project_id`, `account_name`) VALUES
-(1, 1, 'superuser'),
-(2, 1, 'subsuperuser'),
-(3, 1, 'auditor'),
-(4, 1, 'boss'),
-(5, 1, 'user');
+(1, 1, 'Superuser'),
+(2, 1, 'Subsuperuser'),
+(3, 1, 'Auditor'),
+(4, 1, 'Boss'),
+(5, 1, 'User');
 
 -- --------------------------------------------------------
 
@@ -113,15 +114,21 @@ INSERT INTO `fields` (`field_id`, `kpi_id`, `field_name`, `type`, `active`) VALU
 -- --------------------------------------------------------
 
 --
--- Table structure for table `field_value`
+-- Table structure for table `field_values`
 --
 
-CREATE TABLE IF NOT EXISTS `field_value` (
+CREATE TABLE IF NOT EXISTS `field_values` (
   `value_id` int(11) NOT NULL,
   `field_id` int(11) NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `value` text NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `results_id` int(11) NOT NULL,
+  PRIMARY KEY (`value_id`),
   KEY `value_id` (`value_id`,`field_id`),
-  KEY `field_id` (`field_id`)
+  KEY `field_id` (`field_id`),
+  KEY `user_id` (`user_id`,`results_id`),
+  KEY `results_id` (`results_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -148,18 +155,19 @@ CREATE TABLE IF NOT EXISTS `files` (
 CREATE TABLE IF NOT EXISTS `iscu` (
   `iscu_id` int(11) NOT NULL AUTO_INCREMENT,
   `project_id` int(11) NOT NULL,
-  `iscu` text NOT NULL,
+  `iscu` varchar(100) NOT NULL,
   PRIMARY KEY (`iscu_id`),
+  UNIQUE KEY `iscu` (`iscu`),
   KEY `project_id` (`project_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1002 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1003 ;
 
 --
 -- Dumping data for table `iscu`
 --
 
 INSERT INTO `iscu` (`iscu_id`, `project_id`, `iscu`) VALUES
-(1, 1, ''),
-(1001, 1, 'sample');
+(1, 1, 'Admin'),
+(1001, 1, 'FMIS');
 
 -- --------------------------------------------------------
 
@@ -201,6 +209,7 @@ CREATE TABLE IF NOT EXISTS `kpi` (
   `leaf_node` tinyint(1) DEFAULT NULL,
   `parent_kpi` int(11) NOT NULL,
   PRIMARY KEY (`kpi_id`),
+  UNIQUE KEY `kpi_name` (`kpi_name`),
   KEY `project_id` (`project_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=30 ;
 
@@ -343,7 +352,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `account_id` (`account_id`),
   KEY `status_id` (`status_id`),
   KEY `status_id_2` (`status_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=5 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
 
 --
 -- Dumping data for table `users`
@@ -351,7 +360,9 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 INSERT INTO `users` (`user_id`, `iscu_id`, `account_id`, `email`, `fname`, `lname`, `status_id`) VALUES
 (3, 1, 1, 'jasper.cacbay@gmail.com', 'Jasper', 'Cacbay', 1),
-(4, 1001, 5, 'testkpi123@gmail.com', 'Test', 'User', 3);
+(4, 1001, 5, 'testkpi123@gmail.com', 'Test', 'User', 2),
+(5, NULL, NULL, 'minnie.pangilinan@gmail.com', 'minnie', 'pangilinan', 3),
+(6, NULL, NULL, 'asdf@qwer.zxcv', 'asdf', 'qwer', 3);
 
 -- --------------------------------------------------------
 
@@ -370,23 +381,9 @@ CREATE TABLE IF NOT EXISTS `user_status` (
 --
 
 INSERT INTO `user_status` (`status_id`, `status_name`) VALUES
-(1, 'active'),
-(2, 'inactive'),
-(3, 'to confirm');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `values`
---
-
-CREATE TABLE IF NOT EXISTS `values` (
-  `value_id` int(11) NOT NULL AUTO_INCREMENT,
-  `value` text NOT NULL,
-  `results_id` int(11) NOT NULL,
-  PRIMARY KEY (`value_id`),
-  KEY `results_id` (`results_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;
+(1, 'Active'),
+(2, 'Inactive'),
+(3, 'To confirm');
 
 --
 -- Constraints for dumped tables
@@ -405,11 +402,12 @@ ALTER TABLE `fields`
   ADD CONSTRAINT `fields_ibfk_1` FOREIGN KEY (`kpi_id`) REFERENCES `kpi` (`kpi_id`);
 
 --
--- Constraints for table `field_value`
+-- Constraints for table `field_values`
 --
-ALTER TABLE `field_value`
-  ADD CONSTRAINT `field_value_ibfk_2` FOREIGN KEY (`field_id`) REFERENCES `fields` (`field_id`),
-  ADD CONSTRAINT `field_value_ibfk_1` FOREIGN KEY (`value_id`) REFERENCES `values` (`value_id`);
+ALTER TABLE `field_values`
+  ADD CONSTRAINT `field_values_ibfk_2` FOREIGN KEY (`field_id`) REFERENCES `fields` (`field_id`),
+  ADD CONSTRAINT `field_values_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
+  ADD CONSTRAINT `field_values_ibfk_4` FOREIGN KEY (`results_id`) REFERENCES `results` (`results_id`);
 
 --
 -- Constraints for table `files`
@@ -434,8 +432,8 @@ ALTER TABLE `iscu_field`
 -- Constraints for table `iscu_updates`
 --
 ALTER TABLE `iscu_updates`
-  ADD CONSTRAINT `iscu_updates_ibfk_2` FOREIGN KEY (`updates_id`) REFERENCES `updates` (`update_id`),
-  ADD CONSTRAINT `iscu_updates_ibfk_1` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`);
+  ADD CONSTRAINT `iscu_updates_ibfk_1` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`),
+  ADD CONSTRAINT `iscu_updates_ibfk_2` FOREIGN KEY (`updates_id`) REFERENCES `updates` (`update_id`);
 
 --
 -- Constraints for table `kpi`
@@ -465,15 +463,9 @@ ALTER TABLE `results`
 -- Constraints for table `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_ibfk_6` FOREIGN KEY (`status_id`) REFERENCES `user_status` (`status_id`),
   ADD CONSTRAINT `users_ibfk_2` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`),
-  ADD CONSTRAINT `users_ibfk_5` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`) ON DELETE NO ACTION;
-
---
--- Constraints for table `values`
---
-ALTER TABLE `values`
-  ADD CONSTRAINT `values_ibfk_1` FOREIGN KEY (`results_id`) REFERENCES `results` (`results_id`);
+  ADD CONSTRAINT `users_ibfk_5` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`) ON DELETE NO ACTION,
+  ADD CONSTRAINT `users_ibfk_6` FOREIGN KEY (`status_id`) REFERENCES `user_status` (`status_id`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
