@@ -37,6 +37,20 @@
 | in the URL cannot be matched to a valid route.
 |
 */
+//$route['user_rate.html'] = "";
+$route['auditor'] = "user/view/auditor_home";
+$route['user'] = "user/view/user_home";
+$route['rate'] = "user/viewmetric";
+$route['index'] = "user/index";
+$route['auth'] = "user/auth";
+$route['login'] = "user/login";
+$route['signup'] = "user/signup";
+$route['add_account'] = "user/add_account";
+$route['verify'] = "user/viewaccountid";
+$route['auditor_verify'] = "user/viewuser";
+$route['default_controller'] = "welcome";
+$route['404_override'] = '';
+$route['(:any)'] = 'user/view/$1';
 
 
 
