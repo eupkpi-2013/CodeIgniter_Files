@@ -45,6 +45,7 @@ $route['index'] = "user/index";
 $route['auth'] = "user/auth";
 $route['login'] = "user/login";
 $route['signup'] = "user/signup";
+$route['delete_account'] = "user/delete_account";
 $route['add_account'] = "user/add_account";
 $route['verify'] = "user/viewaccountid";
 $route['auditor_verify'] = "user/viewuser";

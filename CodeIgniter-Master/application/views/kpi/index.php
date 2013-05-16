@@ -81,8 +81,10 @@
 
 <body>
 	<div class="login login-banner">
+		<a href = '<?php echo site_url(); ?>/index'>
 		<img src="../kpi_sources/img/up_small.png"/>
 		<h1>eUP KPI</h1>
+		</a>
 	</div>
 
 	<div id="login-buttons" class="login content">

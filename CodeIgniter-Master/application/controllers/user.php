@@ -21,33 +21,13 @@ class User extends CI_Controller {
 		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
 		$this->form_validation->set_rules('gmail', 'Gmail', 'trim|required|valid_email|callback_check_entry');
 		$this->form_validation->set_rules('con_gmail', 'Gmail Confirmation', 'trim|required|matches[gmail]');
-		//$this->form_validation->set_rules('gmail', 'Gmail', 'callback_check_entry');
 		
 		if ($this->form_validation->run() == FALSE) $this->index();
 		else {
-			//$this->user_db->add_user();
+			$this->user_db->add_user();
 			$this->checkmail();
 			$data['url'] = 'index';
 			$data['message'] = 'Signup successful!';
-			$this->load->view('kpi/redirect', $data);
-		}
-	}
-	
-	public function add_account() {
-		$this->load->library('form_validation');
-		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
-		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
-		$this->form_validation->set_rules('gmail', 'Gmail', 'trim|required|valid_email|callback_check_entry');
-		$this->form_validation->set_rules('con_gmail', 'Gmail Confirmation', 'trim|required|matches[gmail]');
-		$this->form_validation->set_rules('iscu','Unit', 'required|callback_check_selection');
-		$this->form_validation->set_rules('account_name','Position', 'required|callback_check_selection');
-		
-		if ($this->form_validation->run() == FALSE) $this->view('superuser_addaccount');
-		else {
-			//$this->user_db->add_user();
-			$this->checkmail();
-			$data['url'] = 'superuser_addaccount';
-			$data['message'] = 'Add account successful';
 			$this->load->view('kpi/redirect', $data);
 		}
 	}
@@ -74,7 +54,7 @@ class User extends CI_Controller {
 		$mail->Subject = "KPI Automation System Account Confirmation";
 		$mail->Body = "klajf;klasdj";
 		$mail->AltBody = "..";
-		if (!$mail->Send()) echo "Mailer Error".$mail->ErrorInfo;
+		if (!$mail->Send()) echo "Error";
 		else echo "Message has been sent";
 	}
 	
@@ -87,6 +67,8 @@ class User extends CI_Controller {
 	}
 	
 	public function check_entry($gmail) {
+		$update = $this->input->get('q');
+		if (isset($update)) return true;
 		if ($this->user_db->gen_query('user_id, iscu_id, status_id','users','email="'.$gmail.'"')->num_rows > 0) {
 			$this->form_validation->set_message('check_entry', 'An account with this %s already exists');
 			return false;
@@ -144,9 +126,8 @@ class User extends CI_Controller {
 		//$data['title'] = ucfirst($page);
 		
 		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect'))) {
-		
 			$iscu_id = 1001;
-			
+				
 			$data['kpi'] = $this->user_db->sidebar();
 			$data['subkpi'] = $this->user_db->subsidebar();
 			$data['update'] = $this->user_db->updates($iscu_id);
@@ -173,11 +154,16 @@ class User extends CI_Controller {
 	public function viewmetric()
 	{
 		$q = $_GET['q'];
+		$iscu_id = 1001;
+		$identifier = "verified";
+		
 		$current_kpi = str_replace("_", " ", strtok($q, "/"));
 		$current_subkpi = str_replace("_", " ", strtok("/"));
 		
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['period'] = $this->user_db->period_value();
+		$data['metric_values'] = $this->user_db->allmetric($iscu_id, $identifier);
 		
 		$data['current_kpi'] = $current_kpi;
 		$data['current_subkpi'] = $current_subkpi;
@@ -215,7 +201,9 @@ class User extends CI_Controller {
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
-		$data['userid'] = $this->user_db->sidebar_verify();
+		$iscu_id = 1001;
+		
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
 		$data['checker'] = "empty";
 		
 		$this->load->view('kpi/header');
@@ -228,15 +216,18 @@ class User extends CI_Controller {
 	public function viewaccountid()
 	{
 		$q = $_GET['q'];
+		$iscu_id = 1001;
+		$identifier = "submitted";
 		
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
-		$data['userid'] = $this->user_db->sidebar_verify();
-		$data['metric'] = $this->user_db->allmetric();
-		$data['verifyvalue'] = $this->user_db->verify_value($q);
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
+		$data['user_id'] = $user_id;
 		$data['checker'] = "notempty";
 		
 		$this->load->view('kpi/header');
@@ -258,6 +249,34 @@ class User extends CI_Controller {
 		$this->load->view('kpi/footer');
 	}
 	
+	public function delete_account() {
+		$q = $_GET['q'];
+		
+		$this->user_db->delete($q);
+		//$this->output->set_header("location: redirect");
+		$data['success'] = true;
+		
+		$this->output->set_header('location: superuser_accounts');
+	}
+	
+	public function add_account() {
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
+		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
+		$this->form_validation->set_rules('gmail', 'Gmail', 'trim|required|valid_email|callback_check_entry');
+		$this->form_validation->set_rules('con_gmail', 'Gmail Confirmation', 'trim|required|matches[gmail]');
+		$this->form_validation->set_rules('iscu','Unit', 'required|callback_check_selection');
+		$this->form_validation->set_rules('account_name','Position', 'required|callback_check_selection');
+		
+		if ($this->form_validation->run() == FALSE) $this->view('superuser_addaccount');
+		else {
+			$this->user_db->add_user();
+			//$this->checkmail();
+			$data['url'] = 'superuser_accounts';
+			$data['message'] = (isset($_GET['q']) ? 'Edit' : 'Add').' account successful';
+			$this->load->view('kpi/redirect', $data);
+		}
+	}
 }
 
 ?>

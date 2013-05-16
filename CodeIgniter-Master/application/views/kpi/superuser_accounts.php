@@ -1,3 +1,9 @@
+<script>
+function confirmDelete(id) {
+	if (confirm("Do you really want to delete this account?\n(Take note that deleting an account is permanent)")) window.location="delete_account?q="+id;
+}
+</script>
+
 <div id="user-contents" class="contents">
 	<div class="accountlist"><h2>List of Accounts:</h2>
 		<div>
@@ -12,12 +18,15 @@
 			<th></th>
 		</tr>
 		<?php
+		echo "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>";
 		foreach ($accounts->result() as $account_item):
 			echo "<tr>";
+			$skip = $account_item->user_id;
 			foreach ($account_item as $field):
-				echo "<td>".$field."</td>";
+				if ($field === $skip) continue;
+				else echo "<td class='accountentry'>".$field."</td>";
 			endforeach;
-			echo '<td><a href=""><button>Edit</button></a><a href=""><button>Delete</button></a></td></tr>';
+			echo '<td class="accountentry"><a href="add_account?q='.$account_item->user_id.'"><button>'.($account_item->status_id == 'To confirm' ? 'Confirm' : 'Edit').'</button></a><button onclick="confirmDelete('.$account_item->user_id.')">Delete</button></td></tr>';
 		endforeach;
 		?>
 		</table>
@@ -26,3 +35,7 @@
 	</div>
 	<div></div>
 </div>
+
+
+
+<!--<a href="delete_account?q='.$account_item->user_id.'">-->
