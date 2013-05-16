@@ -69,18 +69,37 @@
 		
 		public function add_user()
 		{
-			$data=array(
-			'email'=>$this->input->post('gmail'),
-			'fname'=>$this->input->post('fname'),
-			'lname'=>$this->input->post('lname'),
-			'status_id'=>$this->db->query('select status_id from user_status where status_name="To confirm"')->result()[0]->status_id
-			);
-			$this->db->insert('users',$data);
+			$value = $this->input->post('iscu');
+			//if add user from superuser module, add account
+			if ($value!='') {
+				$data=array(
+						$this->input->post('gmail'),
+						$this->input->post('fname'),
+						$this->input->post('lname'),
+						$this->db->query('select iscu_id from iscu where iscu="'.$this->input->post('iscu').'"')->result()[0]->iscu_id,
+						$this->db->query('select account_id from accounts where account_name="'.$this->input->post('account_name').'"')->result()[0]->account_id,
+						$this->db->query('select status_id from user_status where status_name="Active"')->result()[0]->status_id
+						);
+				$sql = "insert into users (email, fname, lname, iscu_id, account_id, status_id) values (?, ?, ?, ?, ?, ?) on duplicate key update email=?, fname=?, lname=?, iscu_id=?, account_id=?, status_id=?";
+				$this->db->query($sql, array_merge($data, $data));
+			}
+			//else add user from signup
+			else {
+				$data=array(
+						$this->input->post('gmail'),
+						$this->input->post('fname'),
+						$this->input->post('lname'),
+						$this->db->query('select status_id from user_status where status_name="To confirm"')->result()[0]->status_id
+						);
+				$sql = "insert into users (email, fname, lname, status_id) values (?, ?, ?, ?)";
+				$this->db->query($sql, $data);
+			}
 		}
 		
-		public function get_accounts() {
-			$this->db->select('fname, lname, email, iscu_id, account_id, status_id');
-			
+		public function get_accounts($where=NULL) {
+			$this->db->select('user_id, fname, lname, email, iscu_id, account_id, status_id');
+			if (!isset($where)) $this->db->where_not_in('status_id', array(2));
+			else $this->db->where('user_id', $where);
 			$result = $this->db->get('users');
 			foreach ($result->result() as $result_item) {
 				//$this->db->select('iscu');
@@ -103,6 +122,14 @@
 			if ($from != '') $from = ' from '.$from;
 			if ($where != '') $where = ' where '.$where;
 			return $this->db->query($select.$from.$where);
+		}
+		
+		public function delete($user_id) {
+			try {
+				$this->db->update('users', array('status_id'=>2), array('user_id'=>$user_id));
+			} catch (Exception $e) {
+				echo var_dump($e);
+			}
 		}
 	}
 ?>
