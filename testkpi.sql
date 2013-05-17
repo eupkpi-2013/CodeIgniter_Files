@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: May 14, 2013 at 10:16 AM
+-- Generation Time: May 16, 2013 at 11:48 AM
 -- Server version: 5.5.27
 -- PHP Version: 5.4.7
 
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `accounts` (
   PRIMARY KEY (`account_id`),
   UNIQUE KEY `account_name` (`account_name`),
   KEY `project_id` (`project_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=9 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `accounts`
@@ -74,7 +74,7 @@ INSERT INTO `fields` (`field_id`, `kpi_id`, `field_name`, `type`, `active`) VALU
 (4, 11, 'No. of Faculty doing transactions online', 'int', 1),
 (5, 11, 'No. of Admin staff and REPS doing transactions online', 'int', 1),
 (6, 11, 'Total alumni transactions done online', 'int', 1),
-(7, 12, 'Total processing per major transactinos', 'int', 1),
+(7, 12, 'Total processing time per major transactions', 'int', 1),
 (8, 13, 'No. of paper based transactions done online per system', 'int', 1),
 (9, 14, 'No. of Campuses accessed to online journals per CU', 'int', 1),
 (10, 15, 'No. of CUs with ICT tools in Research Laboratories', 'int', 1),
@@ -118,18 +118,36 @@ INSERT INTO `fields` (`field_id`, `kpi_id`, `field_name`, `type`, `active`) VALU
 --
 
 CREATE TABLE IF NOT EXISTS `field_values` (
-  `value_id` int(11) NOT NULL,
+  `value_id` int(11) NOT NULL AUTO_INCREMENT,
   `field_id` int(11) NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `value` text NOT NULL,
   `user_id` int(11) NOT NULL,
   `results_id` int(11) NOT NULL,
+  `tag` varchar(100) NOT NULL,
   PRIMARY KEY (`value_id`),
   KEY `value_id` (`value_id`,`field_id`),
   KEY `field_id` (`field_id`),
   KEY `user_id` (`user_id`,`results_id`),
   KEY `results_id` (`results_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=12 ;
+
+--
+-- Dumping data for table `field_values`
+--
+
+INSERT INTO `field_values` (`value_id`, `field_id`, `timestamp`, `value`, `user_id`, `results_id`, `tag`) VALUES
+(1, 1, '2013-05-16 07:21:27', '25', 3, 2, 'verified'),
+(2, 1, '2013-05-16 07:42:18', '0', 3, 1, 'verified'),
+(3, 10, '2013-05-16 08:04:18', '0', 3, 1, 'verified'),
+(4, 10, '2013-05-16 08:04:18', '10', 3, 2, 'verified'),
+(5, 11, '2013-05-16 08:04:18', '0', 3, 1, 'verified'),
+(6, 11, '2013-05-16 08:04:18', '5', 3, 2, 'verified'),
+(7, 12, '2013-05-16 08:04:18', '0', 3, 1, 'verified'),
+(8, 2, '2013-05-16 08:54:52', '0', 3, 1, 'verified'),
+(9, 2, '2013-05-16 08:54:52', '10', 3, 2, 'verified'),
+(10, 3, '2013-05-16 08:54:52', '0', 3, 1, 'verified'),
+(11, 3, '2013-05-16 08:54:52', '15', 3, 2, 'verified');
 
 -- --------------------------------------------------------
 
@@ -159,7 +177,7 @@ CREATE TABLE IF NOT EXISTS `iscu` (
   PRIMARY KEY (`iscu_id`),
   UNIQUE KEY `iscu` (`iscu`),
   KEY `project_id` (`project_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1003 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=10001 ;
 
 --
 -- Dumping data for table `iscu`
@@ -167,7 +185,8 @@ CREATE TABLE IF NOT EXISTS `iscu` (
 
 INSERT INTO `iscu` (`iscu_id`, `project_id`, `iscu`) VALUES
 (1, 1, 'Admin'),
-(1001, 1, 'FMIS');
+(1001, 1, 'FMIS'),
+(10000, 1, 'none');
 
 -- --------------------------------------------------------
 
@@ -191,9 +210,12 @@ CREATE TABLE IF NOT EXISTS `iscu_field` (
 CREATE TABLE IF NOT EXISTS `iscu_updates` (
   `iscu_id` int(11) NOT NULL,
   `updates_id` int(11) NOT NULL,
+  `account_id` int(11) NOT NULL,
   KEY `iscu_id` (`iscu_id`,`updates_id`),
   KEY `updates_id` (`updates_id`),
-  KEY `updates_id_2` (`updates_id`)
+  KEY `updates_id_2` (`updates_id`),
+  KEY `account_id` (`account_id`),
+  KEY `account_id_2` (`account_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -308,14 +330,15 @@ CREATE TABLE IF NOT EXISTS `results` (
   `project_id` int(11) NOT NULL,
   PRIMARY KEY (`results_id`),
   KEY `project_id` (`project_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
 
 --
 -- Dumping data for table `results`
 --
 
 INSERT INTO `results` (`results_id`, `results_name`, `active`, `project_id`) VALUES
-(1, 'baseline', 0, 1);
+(1, 'baseline', 0, 1),
+(2, 'target', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -352,17 +375,17 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `account_id` (`account_id`),
   KEY `status_id` (`status_id`),
   KEY `status_id_2` (`status_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=6 ;
 
 --
 -- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`user_id`, `iscu_id`, `account_id`, `email`, `fname`, `lname`, `status_id`) VALUES
-(3, 1, 1, 'jasper.cacbay@gmail.com', 'Jasper', 'Cacbay', 1),
-(4, 1001, 5, 'testkpi123@gmail.com', 'Test', 'User', 2),
-(5, NULL, NULL, 'minnie.pangilinan@gmail.com', 'minnie', 'pangilinan', 3),
-(6, NULL, NULL, 'asdf@qwer.zxcv', 'asdf', 'qwer', 3);
+(1, 1, 4, 'jasper.cacbay@gmail.com', 'Jasper', 'Cacbay', 1),
+(2, NULL, NULL, 'j.magalona12@gmail.com', 'ren', 'magalona', 3),
+(3, 1001, 5, 'minnie.pangilinan@gmail.com', 'minnie', 'pangilinan', 1),
+(4, 1, 1, 'testkpi123@gmail.com', 'asdr', 'qwer', 1);
 
 -- --------------------------------------------------------
 
@@ -432,6 +455,7 @@ ALTER TABLE `iscu_field`
 -- Constraints for table `iscu_updates`
 --
 ALTER TABLE `iscu_updates`
+  ADD CONSTRAINT `iscu_updates_ibfk_3` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`account_id`),
   ADD CONSTRAINT `iscu_updates_ibfk_1` FOREIGN KEY (`iscu_id`) REFERENCES `iscu` (`iscu_id`),
   ADD CONSTRAINT `iscu_updates_ibfk_2` FOREIGN KEY (`updates_id`) REFERENCES `updates` (`update_id`);
 

@@ -1,12 +1,14 @@
 <?php
 	echo "<script type='text/javascript'>";
-	foreach ($metric as $metric_item): 
+	$many = (count($metric) > 1 ? true : false);
+	foreach ($metric as $metric_item):
 		echo "$(document).ready(function()
-			{
-			$('#metric".$metric_item['field_id']."-viewprev-button').click(function()
-				{
-				$('.metric".$metric_item['field_id']."-prev').toggle();
-				});
+			{";
+		echo ($many ? "$('#metric".$metric_item['field_id']."-viewprev-button')" : "$(#metric".$metric_item['field_id']."-viewprev-button)");
+		echo ".click(function()
+				{";
+		echo ($many ? "$('.metric".$metric_item['field_id']."-prev').toggle()" : "$(.metric".$metric_item['field_id']."-prev).toggle()");
+		echo "});
 			});";
 	endforeach; 
 	echo "</script>";
@@ -36,23 +38,25 @@
 		<table>
 		<?php
 			//place user-id session here
-			$user_id = 4;
+			$user_id = 3;
 			
 			if($checker!='empty'):
 				echo "<h2>".$current_kpi." > ".$current_subkpi."</h2>";
 				$count = 0;
-				if (isset($next)): echo form_open('rate?q='.$next); endif;
+				//if (isset($next)): echo form_open('rate?q='.$next); endif;
 				foreach ($metric as $metric_item): 
 					
-					echo "<tr><td>".$metric_item['field_name']."<td><td><input type='text' name='answer".++$count."' id='answer".++$count."'></input></td><td><button id='metric".$metric_item['field_id']."-viewprev-button'>View Previous Ratings</button></td></tr>";
-				
+					echo "<tr><td>".$metric_item['field_name']."</td><td><input type='text' name='answer".++$count."' id='answer".$count."'></input></td><td><button id='metric".$metric_item['field_id']."-viewprev-button'>View Previous Ratings</button></td></tr>";
+					foreach ($period as $period_item):
+						foreach ($metric_values as $metric_values_item):
+							if (($metric_item['field_id']==$metric_values_item['field_id']) && ($user_id==$metric_values_item['user_id']) && $metric_values_item['results_id']==$period_item['results_id'])
+								echo "<tr class='hidden metric".$metric_item['field_id']."-prev'><td>".$period_item['results_name']."</td><td>".$metric_values_item['value']."</td></tr>";
+						endforeach;
+					endforeach;
 			    endforeach;
-				if (isset($next)): echo form_close(); endif;
+				//if (isset($next)): echo form_close(); endif;
 			else:
 				echo "<h2>eUP KPI: After 2 months</h2><div class='alert alert-red'>You have not yet started rating. Choose a KPI on the left to start.</div><p>Choose a KPI on the left.</p><br><button>View your previous ratings</button>";
-				
-		
-		
 		    endif;
 		?>
 		</table>
