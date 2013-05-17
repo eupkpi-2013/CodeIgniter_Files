@@ -29,11 +29,11 @@ class User extends CI_Controller {
 		
 		$user = strtok($page, "_");
 	
-			$this->load->view('kpi/header');
-			$this->load->view('kpi/banner');
-			$this->load->view('kpi/navbar_'.$user);
-			$this->load->view('kpi/'.$page,$data);
-			$this->load->view('kpi/footer');
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_'.$user);
+		$this->load->view('kpi/'.$page,$data);
+		$this->load->view('kpi/footer');
 
 	}
 	
@@ -43,6 +43,7 @@ class User extends CI_Controller {
 		$iscu_id = 1001;
 		$identifier = "verified";
 		
+		
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['period'] = $this->user_db->period_value();
@@ -50,11 +51,11 @@ class User extends CI_Controller {
 		$data['metric'] = $this->user_db->query_metric($q);
 		$data['checker'] = "notempty";
 		
-			$this->load->view('kpi/header');
-			$this->load->view('kpi/banner');
-			$this->load->view('kpi/navbar_user');
-			$this->load->view('kpi/user_rate',$data);
-			$this->load->view('kpi/footer');
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_user');
+		$this->load->view('kpi/user_rate',$data);
+		$this->load->view('kpi/footer');
 
 	}
 	
@@ -102,6 +103,57 @@ class User extends CI_Controller {
 		$this->load->view('kpi/'.$page,$data);
 		$this->load->view('kpi/footer');
 	}
+	
+	public function edit_values()
+	{
+		$q = $_GET['q'];
+		$iscu_id = 1001;
+		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['metric'] = $this->user_db->query_metric($q);
+		$data['checker'] = "notempty";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_superuser');
+		$this->load->view('kpi/superuser_edit',$data);
+		$this->load->view('kpi/footer');
+	
+	}
+	
+	public function changevalue()
+	{
+		$location = $this->user_db->change_value();
+		header('Location:'.$location);
+	}
+	
+	public function edit_a_value()
+	{
+		$q = $_GET['q'];
+		$iscu_id = 1001;
+		
+		$kpi = strtok($q, "/");
+		$subkpi = strtok("/");
+			
+		$kpi = str_replace("_", " ", $kpi);
+		$subkpi = str_replace("_", " ", $subkpi);
+		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['metric'] = $this->user_db->query_metric($q);
+		$data['path'] = $q;
+		$data['kpi_value_id'] = $this->user_db->find_id($kpi);
+		$data['subkpi_value_id'] = $this->user_db->find_id($subkpi);
+		$data['checker'] = "editing";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_superuser');
+		$this->load->view('kpi/superuser_edit',$data);
+		$this->load->view('kpi/footer');
+	}
+	
 	
 }
 

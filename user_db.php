@@ -89,6 +89,31 @@
 			return $query->result_array();
 		}
 		
+		public function find_id($find)
+		{
+			$query = $this->db->get_where('kpi', array('kpi_name'=> $find));
+			return $query->row_array();
+		}
+		
+		public function change_value()
+		{
+			$kpi_value = $_POST['kpi'];
+			$kpi_id = $_POST['kpi_id'];
+			$this->db->query("UPDATE kpi SET kpi_name='$kpi_value' WHERE kpi_id=$kpi_id");
+			
+			$subkpi_value = $_POST['subkpi'];
+			$subkpi_id = $_POST['subkpi_id'];
+			$this->db->query("UPDATE kpi SET kpi_name='$subkpi_value' WHERE kpi_id=$subkpi_id");
+			
+			foreach(array_combine($_POST['metric'],$_POST['metric_id']) as $field_name => $field_id):
+				$this->db->query("UPDATE fields SET field_name='$field_name' WHERE field_id=$field_id");
+			endforeach;
+			
+			$kpi_value = str_replace(" ", "_", $kpi_value);
+			$subkpi_value = str_replace(" ", "_", $subkpi_value);
+			
+			return "editvalue?q=".$kpi_value."/".$subkpi_value;
+		}
 		
 	}
 ?>
