@@ -154,7 +154,23 @@ class User extends CI_Controller {
 		$this->load->view('kpi/footer');
 	}
 	
-	
+	public function deactivate_value()
+	{
+		$q = $_GET['q'];
+		$level = strtok($q, "/");
+		$id = strtok("/");
+		
+		if($level==1)
+		{
+			$this->user_db->deactivate_1($id);
+		} else if($level==2)
+		{
+			$this->user_db->deactivate_2($id);
+		} else if($level==3)
+		{
+			$this->user_db->deactivate_3($id);
+		}
+	}
 }
 
 ?>

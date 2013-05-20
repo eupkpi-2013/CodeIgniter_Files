@@ -115,5 +115,32 @@
 			return "editvalue?q=".$kpi_value."/".$subkpi_value;
 		}
 		
+		public function deactivate_1($id)
+		{
+			$this->db->query("UPDATE kpi SET active=0 WHERE kpi_id=$id");
+			
+			$query = $this->db->get_where('kpi', array('parent_kpi'=> $id));
+			foreach ($query->result_array() as $query_item):
+				$temp_id = $query_item['kpi_id'];
+				$this->deactivate_2($temp_id);
+			endforeach;
+		}
+		
+		public function deactivate_2($id)
+		{
+			$this->db->query("UPDATE kpi SET active=0 WHERE kpi_id=$id");
+			
+			$query = $this->db->get_where('fields', array('kpi_id'=> $id));
+				foreach ($query->result_array() as $query_item):
+					$temp_id = $query_item['field_id'];
+					$this->deactivate_3($temp_id);
+				endforeach;
+		}
+		
+		public function deactivate_3($id)
+		{
+			$this->db->query("UPDATE fields SET active=0 WHERE field_id=$id");
+		}
+		
 	}
 ?>

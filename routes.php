@@ -45,6 +45,7 @@ $route['verify'] = "user/viewaccountid";
 $route['edit'] = "user/edit_values";
 $route['editvalue'] = "user/edit_a_value";
 $route['changevalue'] = "user/changevalue";
+$route['deactivate'] = "user/deactivate_value";
 $route['auditor_verify'] = "user/viewuser";
 $route['default_controller'] = "welcome";
 $route['404_override'] = '';
