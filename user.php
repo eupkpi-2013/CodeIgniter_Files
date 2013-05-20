@@ -95,6 +95,7 @@ class User extends CI_Controller {
 		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
 		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
 		$data['user_id'] = $user_id;
+		$data['period'] = $this->user_db->period_value();
 		$data['checker'] = "notempty";
 		
 		$this->load->view('kpi/header');

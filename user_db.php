@@ -65,7 +65,7 @@
 		{
 			
 			$this->db->query("drop view IF EXISTS all_results");
-			$this->db->query("create view all_results as SELECT kpi_id,tag,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
+			$this->db->query("create view all_results as SELECT results_id,kpi_id,tag,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
 			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.tag='$identifier'");	
 			$query = $this->db->get('all_results');
 			$this->db->query("drop view all_results");
@@ -85,7 +85,7 @@
 	
 		public function period_value()
 		{
-			$query = $this->db->get('results');
+			$query = $this->db->get_where('results');
 			return $query->result_array();
 		}
 		
