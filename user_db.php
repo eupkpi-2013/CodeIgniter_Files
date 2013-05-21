@@ -142,5 +142,12 @@
 			$this->db->query("UPDATE fields SET active=0 WHERE field_id=$id");
 		}
 		
+		public function changetarget()
+		{
+			foreach(array_combine($_POST['target'],$_POST['id']) as $target_value => $field_id):
+				$this->db->query("UPDATE fields SET target=$target_value WHERE field_id=$field_id");
+			endforeach;
+		}
+		
 	}
 ?>

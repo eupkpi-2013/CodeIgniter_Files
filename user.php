@@ -172,6 +172,44 @@ class User extends CI_Controller {
 			$this->user_db->deactivate_3($id);
 		}
 	}
+	
+	public function settarget()
+	{
+	
+		$q = $_GET['q'];
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['metric'] = $this->user_db->query_metric($q);
+		$data['checker'] = "notempty";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_superuser');
+		$this->load->view('kpi/superuser_targets',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function edittarget()
+	{
+		$q = $_GET['q'];
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['metric'] = $this->user_db->query_metric($q);
+		$data['checker'] = "set";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_superuser');
+		$this->load->view('kpi/superuser_targets',$data);
+		$this->load->view('kpi/footer');
+	
+	}
+	
+	public function savetarget()
+	{
+		$this->user_db->changetarget();
+		header('Location:superuser_targets');
+	}
 }
 
 ?>
