@@ -37,22 +37,18 @@
 | in the URL cannot be matched to a valid route.
 |
 */
-//$route['user_rate.html'] = "";
-$route['auditor'] = "user/view/auditor_home";
-$route['user'] = "user/view/user_home";
-$route['rate'] = "user/viewmetric";
-$route['index'] = "user/index";
-$route['auth'] = "user/auth";
-$route['login'] = "user/login";
-$route['signup'] = "user/signup";
-$route['add_account'] = "user/add_account";
-$route['verify'] = "user/viewaccountid";
-$route['auditor_verify'] = "user/viewuser";
-$route['default_controller'] = "welcome";
-$route['404_override'] = '';
-$route['(:any)'] = 'user/view/$1';
-
-
+$route['publicreports'] = "kpi_generate_controller/publicreports";
+$route['report/(:any)/changevisibleto'] = "kpi_generate_controller/changevisibleto/$1";
+$route['report/(:any)'] = "kpi_generate_controller/report/$1";
+$route['reports'] = "kpi_generate_controller/reports";
+$route['publish/(:any)'] = "kpi_generate_controller/publish/$1";
+$route['generated/txt/(:any)'] = "kpi_generate_controller/previewtxt/$1";
+$route['generated/excel/(:any)'] = "kpi_generate_controller/previewexcel/$1";
+$route['generated/pdf/(:any)'] = "kpi_generate_controller/previewpdf/$1";
+$route['generated/printablepage/(:any)'] = "kpi_generate_controller/printablepage/$1";
+$route['generated'] = "kpi_generate_controller/generated";
+$route['generate/(:any)'] = "kpi_generate_controller/generate/$1";
+$route['generate'] = "kpi_generate_controller/generate/null";
 
 
 /* End of file routes.php */

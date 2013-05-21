@@ -1,18 +1,26 @@
-<! DOCTYPE html>
-<html>
-<head>
-
-<link rel="stylesheet" href="../kpi_sources/style.css">
-<link href='http://fonts.googleapis.com/css?family=Merriweather+Sans' rel='stylesheet' type='text/css'>
-<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-<script src="http://code.jquery.com/jquery-migrate-1.1.1.min.js"></script>
-<script src="../kpi_sources/js/jquery-1.9.1.js"></script>
-<script src="../kpi_sources/Highcharts-3.0.1/js/highcharts.js"></script>
-<script src="../kpi_sources/js/js.js"></script>
+<script language="javascript" type="text/javascript">
+	function submitted(){
+		var username = document.getElementById("uname").value;
+		var redirectto = "";
+		if(username=="user"){
+			redirectto = "user_home.html";
+		}
+		else if(username=="auditor"){
+			redirectto = "auditor_home.html";
+		}
+		else if(username=="superuser"){
+			redirectto = "superuser_home.html";
+		}
+		else if(username=="boss"){
+			redirectto = "boss_home.html";
+		}
+		window.location = redirectto;
+	}
+</script>
 
 <script language="javascript" type="text/javascript">
-	$(document).ready(function(){
-        $('.splash').highcharts({
+$(document).ready(function(){
+        $('#login-splash').highcharts({
             chart: {
                 type: 'column'
             },
@@ -76,45 +84,23 @@
     });
 </script>
 
-<title>eUP KPI</title>
-</head>
+<div class="login login-banner">
+	<img src="../kpi_sources/img/up_small.png"/>
+	<h1>eUP KPI</h1>
+</div>
 
-<body>
-	<div class="login login-banner">
-		<img src="../kpi_sources/img/up_small.png"/>
-		<h1>eUP KPI</h1>
-	</div>
-
-	<div id="login-buttons" class="login content">
-		<button><a href="auth">Log-in with Google</a></button>
+<div id="login-buttons" class="login content">
+	<div id="login-form">
+		<button>Log-in with Google</button>
 		<button id="signup-button">Sign up</button>
-		<?php if (validation_errors() == "") echo "<div id='signup' class='hidden'>";
-			else echo "<div id='signup'>";?>
-		<?php echo validation_errors(); ?>
-		<?php echo form_open('signup'); ?>
-			<label>First Name</label>
-			<input id="fname" name="fname"></input>
-			<label>Last Name</label>
-			<input id="lname" name="lname"></input>
+		<div id="signup" class="hidden">
+			<label>Name</label>
+			<input></input>
 			<label>Gmail</label>
-			<input id="gmail" name="gmail"></input>
-			<label>Confirm Gmail</label>
-			<input id="con_gmail" name="con_gmail"></input>
-			<button class="righted" type="submit">Submit</button>
-		<?php echo form_close(); ?>
+			<input></input>
+			<button class="righted">Submit</button>
 		</div>
 	</div>
 	<div class="login splash"></div>	
-	<div class="login">
-		<button><a href="public_results.html">See Public Reports</a></button>
-	</div>
-
-
-<footer>
-	<div>
-		<a href="about.html">About</a>
-	</div>
-</footer>
-
-</body>
-</html>
+	<div class="login"><a href="public_results.html"><button>See Public Reports</button><a></div>
+</div>

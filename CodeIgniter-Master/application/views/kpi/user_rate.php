@@ -1,8 +1,9 @@
 <div id="user-contents" class="contents">	
-	<div id="user-kpimenu" class="accordion lefted">
+	<div id="user-kpimenu" class="accordion menu lefted">
 		<?php foreach ($kpi as $kpi_item): 
-			 echo "<div><h3>".$kpi_item['kpi_name']."</h3><ul>";
-				 foreach ($subkpi as $subkpi_item): 
+			 echo "<div><h3>".$kpi_item['kpi_name']."</h3>";?>
+				<ul class="accordion-list">
+				<?php foreach ($subkpi as $subkpi_item): 
 					
 						if($subkpi_item['parent_kpi']==$kpi_item['kpi_id'])
 						{
@@ -11,22 +12,36 @@
 							echo "<div><a href='rate?q=".$url1."/".$url2."'><li>".$subkpi_item['kpi_name']."</li></a></div>"; 
 						}
 					
-				 endforeach; 
-			 echo "</ul></div>";
-		      endforeach; 
-		?>
+				endforeach; ?>
+			 </ul></div>
+		      <?php endforeach; ?>
 	</div>	
 	
 	
-	<div id="user-inside" class="lefted">
+	<div id="user-inside" class="inside">
 		<table>
 		<?php		
 			if($checker!='empty'):
-				echo "<h2>".$current_kpi." > ".$current_subkpi."</h2>";
+				foreach ($metric as $metric_item): 		
 				
-				foreach ($metric as $metric_item): 
+				 foreach ($subkpi as $subkpi_item): 
+						 
+							if($subkpi_item['kpi_id']==$metric_item['kpi_id'])
+							 {
+								foreach ($kpi as $kpi_item):
+									if($kpi_item['kpi_id']==$subkpi_item['parent_kpi'])
+									{
+										$parent = $kpi_item['kpi_name'];
+									}
+								endforeach;
+								
+								echo "<h2>".$parent." > ".$subkpi_item['kpi_name']."</h2>";
+					         }
+						
+				 endforeach; 
 				
-					echo "<tr><td>".$metric_item['field_name']."<td><td><input type='text'></input></td></tr>";
+				
+					echo "<tr><td>".$metric_item['field_name']."<td><td><input type='number' class='number-input' min='0' role='spinbutton'></input></td></tr>";
 				
 			     endforeach;		
 		
@@ -37,9 +52,8 @@
 		    endif; ?>
 		</table>
 		<?php
-			if($checker!='empty'):
-				if (isset($next)) echo "<a href='rate?q=".$next."'><button class='righted'>Next</button>";
-				else echo "<a href='user_rated'><button class='righted'>Next</button>";
+			if($checker!='empty'): 
+				echo "<a href='user_rate_kpi1-3.html'><button class='righted'>Next</button>";
 		
 		 endif; ?>
 		
