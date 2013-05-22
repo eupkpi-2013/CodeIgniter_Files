@@ -37,22 +37,36 @@
 | in the URL cannot be matched to a valid route.
 |
 */
-$route['user_rate.html'] = "";
+//$route['user_rate.html'] = "";
+$route['shit'] = "user/shit";
+$route['logout'] = "user/logout";
 $route['auditor'] = "user/view/auditor_home";
 $route['user'] = "user/view/user_home";
 $route['rate'] = "user/viewmetric";
-$route['verify'] = "user/viewaccountid";
+$route['submit'] = "user/submit";
+$route['deactivate'] = "user/deactivate_value";
 $route['edit'] = "user/edit_values";
-$route['save'] = "user/savetarget";
 $route['editvalue'] = "user/edit_a_value";
 $route['changevalue'] = "user/changevalue";
-$route['deactivate'] = "user/deactivate_value";
-$route['settarget'] = "user/settarget";
-$route['edittarget'] = "user/edittarget";
+$route['auth'] = "user/auth";
+$route['login'] = "user/login";
+$route['signup'] = "user/signup";
+$route['delete_account'] = "user/delete_account";
+$route['add_account'] = "user/add_account";
+$route['verify'] = "user/viewaccountid";
 $route['auditor_verify'] = "user/viewuser";
 $route['default_controller'] = "welcome";
 $route['404_override'] = '';
 $route['(:any)'] = 'user/view/$1';
+
+
+// for superuser kpi
+$route['addKPI'] = 'user/addKPI';
+$route['addSubKPI'] = 'user/addSubKPI';
+$route['addMetric'] = 'user/addMetric';
+$route['addMetric1'] = 'user/addMetric1';
+//$route['edit'] = "user/viewedit";
+
 
 
 
