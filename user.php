@@ -8,17 +8,12 @@ class User extends CI_Controller {
 		$this->load->model('user_db');
 		$this->load->library('session');
 		
+	
 	}
 	
-	public function verify_user()
-	{
-		if(!$this->session->userdata('email'))
-		{
-			$this->output->set_header('location: index');
-		}
-	}
 	
 	public function signup() { // done (?)
+	
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
 		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
@@ -80,6 +75,8 @@ class User extends CI_Controller {
 	}
 	
 	public function auth() {
+		
+	
 		require_once 'kpi_sources/openid.php';
 		$openid = new LightOpenID("localhost");
 		try {
@@ -101,6 +98,7 @@ class User extends CI_Controller {
 	}
 	
 	public function login() { // small fix
+		
 		require_once 'kpi_sources/openid.php';
 		$openid = new LightOpenID("localhost");
 		 
@@ -119,7 +117,7 @@ class User extends CI_Controller {
 									'user_type' => $Cuser,
 									'email' => $email);
 						$this->session->set_userdata($newdata);
-						$this->output->set_header('location: redirect');
+						$this->output->set_header("location: redirect");
 					} else if ($user->result()[0]->status_id == 2) $this->output->set_header('location: redirect_fail');
 					else $this->output->set_header('location: redirect_fail');
 				}
@@ -141,6 +139,12 @@ class User extends CI_Controller {
 		//$data['title'] = ucfirst($page);
 		
 		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect'))) {
+			
+			if(!isset($this->session->userdata['email']))
+			{
+				$this->output->set_header('location: index');
+			}
+			
 			$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
 				
 			$data['kpi'] = $this->user_db->sidebar(true);
@@ -169,6 +173,11 @@ class User extends CI_Controller {
 	
 	public function viewmetric() // IMPORTANT TO FIX !!! error check din
 	{
+	
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
 		/* $post_values = $this->input->post(NULL, true);
 		$this->load->library('form_validation');
 		if (!empty($post_values) && !in_array("", $post_values)) {
@@ -228,6 +237,12 @@ class User extends CI_Controller {
 	}
 	
 	public function submit() { // IMPORTANT TO FIX !!!
+		
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
 		$this->load->helper('url');
 
 		$q = $_GET['q'];
@@ -246,6 +261,12 @@ class User extends CI_Controller {
 	
 	public function viewuser() // auditor
 	{
+		
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+			
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
@@ -263,6 +284,11 @@ class User extends CI_Controller {
 	
 	public function viewaccountid() // audior list ng mga unverified rate
 	{
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
 		$q = $_GET['q'];
 		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
 		$identifier = "submitted";
@@ -290,6 +316,12 @@ class User extends CI_Controller {
 	}
 	
 	public function view_accounts($page) { // view accounts for super user
+		
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
 		$data['accounts'] = $this->user_db->get_accounts();
 		$data['iscu'] = $this->user_db->gen_query('iscu', 'iscu');
 		$data['account_name'] = $this->user_db->gen_query('account_name','accounts','');
@@ -302,6 +334,8 @@ class User extends CI_Controller {
 	}
 	
 	public function delete_account() { // dapat ba magnotify sa na-delete?
+		
+		
 		$q = $_GET['q'];
 		
 		$this->user_db->delete($q);
@@ -312,6 +346,7 @@ class User extends CI_Controller {
 	}
 	
 	public function add_account() { // fix needed
+	
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
 		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
@@ -437,6 +472,7 @@ class User extends CI_Controller {
 	
 	public function deactivate_value()
 	{
+			
 		$q = $_GET['q'];
 		$level = strtok($q, "/");
 		$id = strtok("/");
@@ -477,6 +513,11 @@ class User extends CI_Controller {
 	
 	public function edit_values()
 	{
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
 		$q = $this->parse_q($_GET['q']);
 		$iscu_id = $this->session->userdata('iscu_field');
 		
@@ -555,6 +596,11 @@ class User extends CI_Controller {
 	}
 	
 	public function changevalue() { // error checking for editing kpi
+		if(!isset($_SESSION['email']))			
+		{
+			$this->output->set_header('location: index');
+		}
+	
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('kpi', 'KPI Name', 'trim|required|min_length[3]|callback_check_kpichange');
 		$this->form_validation->set_rules('subkpi', 'SubKPI Name', 'trim|required|min_length[3]|callback_check_subkpichange');
@@ -575,6 +621,16 @@ class User extends CI_Controller {
 	
 	public function edit_a_value()
 	{
+		if(!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
+		if(!isset($_SESSION['email']))			
+		{
+			$this->output->set_header('location: index');
+		}
+			
 		$q = $this->parse_q($_GET['q']);
 		$iscu_id = $this->session->userdata('iscu_field');
 
@@ -620,6 +676,7 @@ class User extends CI_Controller {
 	}
 	
 	function shit() {
+		
 		echo "<pre>";
 		print_r($this->input->post(NULL, true));
 		echo "</pre>";
@@ -627,6 +684,7 @@ class User extends CI_Controller {
 	
 	public function logout()
 	{
+		
 		$this->session->sess_destroy();
 		$this->output->set_header('location: index');
 	}
