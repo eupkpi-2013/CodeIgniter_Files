@@ -127,14 +127,13 @@
 	}
 	</script>
 <div id="user-contents" class="contents">
-	<?php echo $highchart; ?>
 	<?php
 		echo '<h3>'.$output['output_name'].'</h3>';
 		$timestamp = strtotime($output['timestamp']);
 		echo '<p>Published: '.date("F j, Y, g:i a", $timestamp).' by '.$user['fname'].' '.$user['lname'].'</p>';
 		echo '<p>';
 		echo '<button id="editv-button" onclick="togglevisible()">Edit</button>';
-		echo '<button id="savev-button" onclick="savevisible()">Save</button>';
+		echo '<button id="savev-button" class="button-green" onclick="savevisible()">Save</button>';
 		echo 'Visible to: ';
 		if($output['is_public'])
 			echo 'Public';
@@ -188,6 +187,8 @@
 		echo '<p>'.$output['output_description'].'</p>';
 	?>
 	
+	<?php if(isset($highchart)):?>
+	<?php echo $highchart; ?>
 	<div id="container" class="slideshow">
 		<?php
 			foreach($subkpis as $subkpi){
@@ -203,10 +204,11 @@
 			<div class="righted" onclick="nextchart()"><button class="slideshow-right">right</button></div>
 		</div>
 	</div>
+	<?php endif?>
 	<div>
 		<button onclick="view_txt()">Download TXT</button>
 		<button onclick="view_excel()">Download Excel</button>
 		<button onclick="view_pdf()">Download PDF</button>
-		<button onclick="view_printable_page()">View Printable Page</button><br>
+		<?php if(isset($highchart)):?><button onclick="view_printable_page()">View Printable Page</button><br><?php endif?>
 	</div>
 </div>

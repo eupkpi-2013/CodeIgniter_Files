@@ -79,11 +79,15 @@ function generate(){
 <div id="user-contents" class="contents">
 	<h2>Create a New Report</h2>
 	<form id="theform" action="<?php echo site_url(); ?>/generated" method="post">
-	<label>Report Name</label>
+	 <?php 
+		if(isset($message))
+			echo "<div class='alert alert-red'>".$message."</div>";
+	?>
+	<label>Report Name</label> 
 	<input id="name" name="name" class="input-medium" value="<?php if(isset($output)) echo $output['output_name']; ?>"></input>
 	<label>Description</label>
 	<textarea id="description" name="description"><?php if(isset($output)) echo $output['output_description']; ?></textarea>
-	<label>Select values to be included:</label>
+	<br><br><label>Select values to be included:</label>
 	<ul><li><input type="checkbox"  class="checklist">Select All</input><br>
 	<?php
 	foreach($kpis as $kpi){
@@ -187,7 +191,5 @@ function generate(){
 		<input type="checkbox">Account2</input><br>
 		<input type="checkbox">Account3</input><br> -->
 	</form>
-	<button onclick="generate()">Generate</button>
-	<button onclick="redirectme()">redirect</button>
-	
+	<button onclick="generate()">Generate</button	
 </div>

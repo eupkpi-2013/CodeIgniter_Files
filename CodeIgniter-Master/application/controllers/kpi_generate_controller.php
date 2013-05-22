@@ -20,14 +20,16 @@ class kpi_generate_controller extends CI_Controller {
 		$data['accounts'] = $this->kpi_generate_model->get_all_accounts();
 		$data['output_types'] = $this->kpi_generate_model->get_output_types();
 		
-		if($output_id == "null"){
+		if($output_id == "null" || $output_id == "exists"){
+			if($output_id == "exists"){
+				$data['message'] = "Report Name already exists.";
+			}
 			$undone_output = $this->kpi_generate_model->get_all_not_done_output(0);
 			foreach($undone_output as $output){
 				$this->kpi_generate_model->delete_all_output_rels($output['output_id']);
 				$this->kpi_generate_model->delete_output($output['output_id']);
 			}
 		}
-		
 		else if($output_id != "null"){
 			$data['output'] = $this->kpi_generate_model->get_output($output_id);
 			$data['output_fields'] = $this->kpi_generate_model->get_output_fields($output_id);
@@ -42,100 +44,112 @@ class kpi_generate_controller extends CI_Controller {
 	}
 	
 	public function generated()
-	{	$metrics = $this->kpi_generate_model->get_all_metrics();
-		$results = $this->kpi_generate_model->get_all_results();
-		$iscus = $this->kpi_generate_model->get_all_iscus();
-		$accounts = $this->kpi_generate_model->get_all_accounts();
-		$fields_included = [];
-		$subkpis_included = [];
-		$results_included = [];
-		$iscus_included = [];
-		$accounts_included = [];
-		foreach($metrics as $metric){
-			$postname = 'checkfield'.$metric['field_id'];
-			if (isset($_POST[$postname]))
-			{
-				array_push($fields_included, $metric);
-				$breadcrumbs = $this->kpi_generate_model->get_breadcrumbs($metric['field_id']);
-				$subkpi = end($breadcrumbs);
-				if(!in_array($subkpi, $subkpis_included)){
-					array_push($subkpis_included, $subkpi);
-				}
-			}
-		}
-		foreach($results as $result){
-			$postname = 'checkresult'.$result['results_id'];
-			if (isset($_POST[$postname]))
-			{
-				array_push($results_included, $result);
-			}
-		}
-		foreach($iscus as $iscu){
-			$postname = 'checkiscu'.$iscu['iscu_id'];
-			if (isset($_POST[$postname]))
-			{
-				array_push($iscus_included, $iscu);
-			}
-		}
-		foreach($accounts as $account){
-			$postname = 'checkaccount'.$account['account_id'];
-			if (isset($_POST[$postname]))
-			{
-				array_push($accounts_included, $account);
-			}
-		}
-		if (isset($_POST['checkpublic'])){
-			$is_public = 1;
+	{	
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('name', 'name', 'required|is_unique[output.output_name]');
+		$exists = $this->kpi_generate_model->check_output_exists($_POST['name']);
+		if($exists>0){
+			$this->generate('exists');
 		}
 		else
-			$is_public = 0;
-		
-		// update db
-		if (isset($_POST['outputid']))
 		{
-			$output_id = $_POST['outputid'];
-			$this->kpi_generate_model->update_output($output_id, $_POST['name'], $_POST['description'],$_POST['charttype'],$is_public);
-			$this->kpi_generate_model->delete_all_output_rels($output_id);
+			$metrics = $this->kpi_generate_model->get_all_metrics();
+			$results = $this->kpi_generate_model->get_all_results();
+			$iscus = $this->kpi_generate_model->get_all_iscus();
+			$accounts = $this->kpi_generate_model->get_all_accounts();
+			$fields_included = [];
+			$subkpis_included = [];
+			$results_included = [];
+			$iscus_included = [];
+			$accounts_included = [];
+			foreach($metrics as $metric){
+				$postname = 'checkfield'.$metric['field_id'];
+				if (isset($_POST[$postname]))
+				{
+					array_push($fields_included, $metric);
+					$breadcrumbs = $this->kpi_generate_model->get_breadcrumbs($metric['field_id']);
+					$subkpi = end($breadcrumbs);
+					if(!in_array($subkpi, $subkpis_included)){
+						array_push($subkpis_included, $subkpi);
+					}
+				}
+			}
+			foreach($results as $result){
+				$postname = 'checkresult'.$result['results_id'];
+				if (isset($_POST[$postname]))
+				{
+					array_push($results_included, $result);
+				}
+			}
+			foreach($iscus as $iscu){
+				$postname = 'checkiscu'.$iscu['iscu_id'];
+				if (isset($_POST[$postname]))
+				{
+					array_push($iscus_included, $iscu);
+				}
+			}
+			foreach($accounts as $account){
+				$postname = 'checkaccount'.$account['account_id'];
+				if (isset($_POST[$postname]))
+				{
+					array_push($accounts_included, $account);
+				}
+			}
+			if (isset($_POST['checkpublic'])){
+				$is_public = 1;
+			}
+			else
+				$is_public = 0;
+			
+			// update db
+			if (isset($_POST['outputid']))
+			{
+				$output_id = $_POST['outputid'];
+				$this->kpi_generate_model->update_output($output_id, $_POST['name'], $_POST['description'],$_POST['charttype'],$is_public);
+				$this->kpi_generate_model->delete_all_output_rels($output_id);
+			}
+			
+			// insert to db
+			else{
+				$output_id = $this->kpi_generate_model->new_output($_POST['name'],$_POST['description'],$_POST['charttype'],$is_public,1);
+			}	
+			
+			foreach($fields_included as $field){
+				$this->kpi_generate_model->new_output_field($field['field_id'],$output_id);
+			}	
+			foreach($results_included as $result){
+				$this->kpi_generate_model->new_output_result($result['results_id'], $output_id);
+			}
+			foreach($iscus_included as $iscu){
+				$this->kpi_generate_model->new_output_iscu($iscu['iscu_id'], $output_id);
+			}
+			foreach($accounts_included as $account){
+				$this->kpi_generate_model->new_output_account($account['account_id'], $output_id);
+			}
+			
+			// always add boss
+			$this->kpi_generate_model->new_output_account(4, $output_id);
+			
+			// always add superuser
+			$this->kpi_generate_model->new_output_account(1, $output_id);
+			
+			// write text file
+			$this->info_file($output_id);
+			
+			// get javascript and breadcrumbs
+			if($_POST['charttype']!=1){
+				$hc = $this->load_highchart($output_id);
+				$data['highchart'] = $hc[0];
+			}
+			
+			$data['subkpis'] = $subkpis_included;
+			$data['output'] = $this->kpi_generate_model->get_output($output_id);	
+				
+			$this->load->view('generate/head');
+			$this->load->view('generate/header');
+			$this->load->view('generate/content-generate-preview', $data);
+			$this->load->view('generate/footer');
 		}
-		
-		// insert to db
-		else{
-			$output_id = $this->kpi_generate_model->new_output($_POST['name'],$_POST['description'],$_POST['charttype'],$is_public,1);
-		}	
-		
-		foreach($fields_included as $field){
-			$this->kpi_generate_model->new_output_field($field['field_id'],$output_id);
-		}	
-		foreach($results_included as $result){
-			$this->kpi_generate_model->new_output_result($result['results_id'], $output_id);
-		}
-		foreach($iscus_included as $iscu){
-			$this->kpi_generate_model->new_output_iscu($iscu['iscu_id'], $output_id);
-		}
-		foreach($accounts_included as $account){
-			$this->kpi_generate_model->new_output_account($account['account_id'], $output_id);
-		}
-		
-		// always add boss
-		$this->kpi_generate_model->new_output_account(4, $output_id);
-		
-		// always add superuser
-		$this->kpi_generate_model->new_output_account(1, $output_id);
-		
-		// write text file
-		$this->info_file($output_id);
-		
-		// get javascript and breadcrumbs
-		$hc = $this->load_highchart($output_id);
-		
-		$data['subkpis'] = $subkpis_included;
-		$data['highchart'] = $hc[0];
-		$data['output'] = $this->kpi_generate_model->get_output($output_id);
-		
-		$this->load->view('generate/head');
-		$this->load->view('generate/header');
-		$this->load->view('generate/content-generate-preview', $data);
-		$this->load->view('generate/footer');
 	}
 	
 	public function get_breadcrumbs($output_id, $fields_included){
@@ -163,63 +177,76 @@ class kpi_generate_controller extends CI_Controller {
 		$fields_included = $this->kpi_generate_model->get_output_fields($output_id);
 		$crumbs_included = $this->get_breadcrumbs($output_id, $fields_included);
 		$results_included = $this->kpi_generate_model->get_output_results($output_id);
-		$js = '<script type="text/javascript">';
+		
+		$js = '<script>';
 		$js = $js.'$(function () {';
+		
 		foreach($crumbs_included as $subkpi){
-			$js = $js.'$("#container'.$subkpi[0]['kpi_id'].'").highcharts({';
-			$js = $js.'chart: {
+			$element = '#container'.$subkpi[0]['kpi_id'];
+			$title = $subkpi[1]['kpi_name'].">".$subkpi[0]['kpi_name'];
+			$categories = array();
+			foreach($fields_included as $field){
+				if($subkpi[0]['kpi_id']==$field['kpi_id']){
+					array_push($categories, '"'.$field['field_name'].'"');
+				}					
+			}
+			$series = array();
+			foreach($results_included as $result){
+				$name = $result['results_name'];
+				$data = array();
+				foreach($fields_included as $field){
+					if($subkpi[0]['kpi_id']==$field['kpi_id']){
+						$value = $this->kpi_generate_model->get_field_value($result['results_id'],$field['field_id']);
+						if(isset($value['value']))
+							$value = $value['value'];
+						else
+							$value = 0;
+						array_push($data, $value);
+					}
+				}
+				array_push($series, array("name"=>$name, "data"=>$data));
+			}
+			$hc = '$("'.$element.'").highcharts({
+					chart: {
 					type: "column"
 					},
 					title: {
-					text: "'.$subkpi[1]['kpi_name'].">".$subkpi[0]['kpi_name'].'"
+						text: "'.$title.'"
 					},
 					subtitle: {
 						text: ""
 					},
 					xAxis: {
-					categories: [';
-				foreach($fields_included as $field){
-					$f = $this->kpi_generate_model->get_field($field['field_id']);
-					if($subkpi[0]['kpi_id']==$f['kpi_id']){
-						$js = $js.'"'.$f['field_name'].'", ';
-					}					
-				}           
-					$js = $js.']
-				},
-				yAxis: {
-					min: 0,
-					title: {
+						categories: ['.implode(",", $categories).']
+					},
+					yAxis: {
+						min: 0,
+						title: {
+						}
+					},
+					tooltip: {
+						headerFormat: "<span style=\'font-size:10px\'>{point.key}</span><table>",
+						pointFormat: "<tr><td style=\'color:{series.color};padding:0\'>{series.name}: </td>" +
+							"<td style=\'padding:0\'><b>{point.y:.1f}</b></td></tr>",
+						footerFormat: "</table>",
+						shared: true,
+						useHTML: true
+					},
+					plotOptions: {
+						column: {
+							pointPadding: 0.2,
+							borderWidth: 0
+						}
+					},
+					series: [';
+					foreach($series as $serie){
+						$hc = $hc.'{name: "'.$serie['name'].'", data: ['.implode(",", $serie['data']).']},';
 					}
-				},
-				tooltip: {
-					headerFormat: "<span style=\'font-size:10px\'>{point.key}</span><table>",
-					pointFormat: "<tr><td style=\'color:{series.color};padding:0\'>{series.name}: </td>" +
-						"<td style=\'padding:0\'><b>{point.y:.1f}</b></td></tr>",
-					footerFormat: "</table>",
-					shared: true,
-					useHTML: true
-				},
-				plotOptions: {
-					column: {
-						pointPadding: 0.2,
-						borderWidth: 0
-					}
-				},
-				series: [';
-			foreach($results_included as $result){
-				$js = $js.'{ name: "'.$result['results_name'].'", data: [ ';
-				foreach($fields_included as $field){
-					$f = $this->kpi_generate_model->get_field($field['field_id']);
-					if($subkpi[0]['kpi_id']==$f['kpi_id']){
-						$value = $this->kpi_generate_model->get_field_values($result['results_id'],[$f['field_id']]);
-						$js = $js.$value[0]['value'].', ';
-					}
-				}
-				$js = $js.']},';
-			}
-				$js = $js.']
-						});';
+			$hc = $hc.']
+					});';
+			$js = $js.$hc;
 		}
+		
 		$js = $js.'});';
 		$js = $js.'</script>';
 		return [$js,$crumbs_included];
@@ -229,69 +256,75 @@ class kpi_generate_controller extends CI_Controller {
 		$fields_included = $this->kpi_generate_model->get_output_fields($output_id);
 		$crumbs_included = $this->get_breadcrumbs($output_id, $fields_included);
 		$results_included = $this->kpi_generate_model->get_output_results($output_id);
-		$js = "<script>
-				$(function () {";
-		foreach ($crumbs_included as $subkpi){
-			$js = $js."$('#container".$subkpi[0]['kpi_id']."').highcharts({
-				chart: {
-					type: 'line',
-					marginRight: 130,
-					marginBottom: 25
-				},
-				title: {
-					text: \"".$subkpi[1]['kpi_name'].">".$subkpi[0]['kpi_name']."\",
-					x: -20 //center
-				},
-				subtitle: {
-					text: '',
-					x: -20
-				},
-				xAxis: {
-					categories: [";
+		$js = '<script>';
+		$js = $js.'$(function () {';
+		
+		foreach($crumbs_included as $subkpi){
+			$element = '#container'.$subkpi[0]['kpi_id'];
+			$title = $subkpi[1]['kpi_name'].">".$subkpi[0]['kpi_name'];
+			$categories = array();
+			foreach($results_included as $result){
+				array_push($categories, '"'.$result['results_name'].'"');
+			}
+			$series = array();
+			foreach($fields_included as $field){
+				if($subkpi[0]['kpi_id']==$field['kpi_id']){
+					$name = $field['field_name'];
+					$data = array();
 					foreach($results_included as $result){
-						$js = $js."\"".$result['results_name']."\", ";
+							$value = $this->kpi_generate_model->get_field_value($result['results_id'],$field['field_id']);
+							if(isset($value['value']))
+								$value = $value['value'];
+							else
+								$value = 0;
+							array_push($data, $value);
 					}
-				$js = $js."]
-				},
-				yAxis: {
-					title: {
-						text: 'Temperature (°C)'
+					array_push($series, array("name"=>$name, "data"=>$data));
+				}				
+			}
+			$hc = '$("'.$element.'").highcharts({
+					chart: {
+					type: "line"
 					},
-					plotLines: [{
-						value: 0,
-						width: 1,
-						color: '#808080'
-					}]
-				},
-				tooltip: {
-					valueSuffix: '°C'
-				},
-				legend: {
-					layout: 'vertical',
-					align: 'right',
-					verticalAlign: 'top',
-					x: -10,
-					y: 100,
-					borderWidth: 0
-				},
-				series: [";
-					 foreach($fields_included as $field){
-						if($subkpi[0]['kpi_id']==$field['kpi_id']){
-							$js=$js."{
-									name: \"".$field['field_name']."\", ";
-							$js=$js."data: [";
-							foreach($results_included as $result){							
-								$value = $this->kpi_generate_model->get_field_values($result['results_id'],[$field['field_id']]);
-								$js=$js.$value[0]['value'].", ";
-							}
-							$js=$js."]}, ";
+					title: {
+						text: "'.$title.'"
+					},
+					subtitle: {
+						text: ""
+					},
+					xAxis: {
+						categories: ['.implode(",", $categories).']
+					},
+					yAxis: {
+						min: 0,
+						title: {
 						}
-					 }
-				$js=$js."]
-						});";
-			}			
-		$js = $js."});
-		</script>";
+					},
+					tooltip: {
+						headerFormat: "<span style=\'font-size:10px\'>{point.key}</span><table>",
+						pointFormat: "<tr><td style=\'color:{series.color};padding:0\'>{series.name}: </td>" +
+							"<td style=\'padding:0\'><b>{point.y:.1f}</b></td></tr>",
+						footerFormat: "</table>",
+						shared: true,
+						useHTML: true
+					},
+					plotOptions: {
+						column: {
+							pointPadding: 0.2,
+							borderWidth: 0
+						}
+					},
+					series: [';
+					foreach($series as $serie){
+						$hc = $hc.'{name: "'.$serie['name'].'", data: ['.implode(",", $serie['data']).']},';
+					}
+			$hc = $hc.']
+					});';
+			$js = $js.$hc;
+		}
+		
+		$js = $js.'});';
+		$js = $js.'</script>';
 		return [$js,$crumbs_included];
 	}
 	
@@ -464,15 +497,19 @@ class kpi_generate_controller extends CI_Controller {
 	}
 	public function report($output_id){
 		$output = $this->kpi_generate_model->get_output($output_id);
-		$hc = $this->load_highchart($output_id);
-		$subkpis = [];
-		foreach($hc[1] as $crumb){
-			array_push($subkpis, $crumb[0]);
+		if($output['output_type']!=1){
+			$hc = $this->load_highchart($output_id);
+			$subkpis = [];
+			foreach($hc[1] as $crumb){
+				array_push($subkpis, $crumb[0]);
+			}
+			$data['highchart'] = $hc[0];
+			$data['subkpis'] = $subkpis;
 		}
 		
 		$data['output'] = $output;
-		$data['highchart'] = $hc[0];
-		$data['subkpis'] = $subkpis;
+		
+		
 		$data['output_accounts'] = $this->kpi_generate_model->get_output_accounts($output_id);
 		$data['output_iscus'] = $this->kpi_generate_model->get_output_iscus($output_id);
 		$data['iscus'] = $this->kpi_generate_model->get_all_iscus();
@@ -521,5 +558,12 @@ class kpi_generate_controller extends CI_Controller {
 	}
 	
 	public function publicreports(){
+		$data['reports'] = $this->kpi_generate_model->get_all_public_output();
+		$data['reports'] = array_reverse($data['reports']);
+		
+		$this->load->view('generate/head');
+		$this->load->view('generate/header');
+		$this->load->view('generate/reports',$data);
+		$this->load->view('generate/footer');
 	}
 }

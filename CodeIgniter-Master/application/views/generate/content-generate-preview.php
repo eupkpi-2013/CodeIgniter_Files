@@ -95,13 +95,15 @@
 		}
 	}
 </script>
-<?php echo $highchart; echo ""; ?>
+
 <div id="user-contents" class="contents">
 	<h2>New Report Preview</h2>
 	<?php
 		echo "<h3>".$output['output_name']."</h3>";
 		echo "<p>".$output['output_description']."</p>";
 	?>
+	<?php if(isset($highchart)): ?>
+	<?php echo $highchart; echo ""; ?>
 	<div id="container" class="slideshow" style="height:600px">
 		<?php
 			foreach($subkpis as $subkpi){
@@ -115,11 +117,12 @@
 		<div class="lefted" onclick="prevchart()"><button class="slideshow-left">left</button></div>
 		<div class="righted" onclick="nextchart()"><button class="slideshow-right">right</button></div>
 	</div>
+	<?php endif;?>
 	<button onclick="view_txt()" class="lefted">View TXT</button>
 	<button onclick="view_excel()" class="lefted">View Excel</button>
 	<button onclick="view_pdf()" class="lefted">View PDF</button>
 	<button onclick="view_printable_page()" class="lefted">View Printable Page</button>
-	<button onclick="publish()" class="righted">Publish</button>
+	<button onclick="publish()" class="righted button-green">Publish</button>
 	<button onclick="back()" class="righted">Edit</button>
 	
 	

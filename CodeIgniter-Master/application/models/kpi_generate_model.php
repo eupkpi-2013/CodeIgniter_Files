@@ -20,25 +20,44 @@ class kpi_generate_model extends CI_Model {
 
 		// $this->load->model('Model_name', '', $config);
 		// $this->load->database();
+		
+		$this->load->library('session');
+		$this->session->set_userdata('user', 1);
+		$this->session->set_userdata('iscu', 1);
+		$this->session->set_userdata('account', 1);
+		$this->session->set_userdata('project', 1);
+		// echo var_dump($this->session->all_userdata());
+		
 	}
 	public function get_parent_kpis(){
+		$project_id = $this->session->userdata('project');
+		
 		$sql = "SELECT * 
 				FROM kpi
-				WHERE parent_kpi=0";
+				WHERE parent_kpi=0
+				AND project_id=".$project_id;
 		$query = $this->db->query($sql);
 		return $query->result_array();
 	}
 	
 	public function get_sub_kpis(){
+		$project_id = $this->session->userdata('project');
+		
 		$sql = "SELECT * 
 				FROM kpi
-				WHERE parent_kpi>0";
+				WHERE parent_kpi>0
+				AND project_id=".$project_id;
 		$query = $this->db->query($sql);
 		return $query->result_array();
 	}
 	
 	public function get_all_metrics(){
-		$sql = "SELECT * 
+		$user_id = $this->session->userdata('user');
+		$iscu_id = $this->session->userdata('iscu');
+		$account_id = $this->session->userdata('account');
+		$project_id = $this->session->userdata('project');
+		
+		$sql = "SELECT fields.* 
 				FROM fields";
 		$query = $this->db->query($sql);
 		return $query->result_array();
@@ -75,6 +94,14 @@ class kpi_generate_model extends CI_Model {
 		// echo $sql;
 		$query = $this->db->query($sql);
 		return $query->result_array();
+	}
+	
+	public function get_field_value($results_id, $field_id){
+		$sql = "SELECT * FROM `field_values` 
+				WHERE results_id=".$results_id." 
+				AND field_id=".$field_id;
+		$query = $this->db->query($sql);
+		return $query->row_array();
 	}
 	
 	public function get_field($field_id)
@@ -231,7 +258,7 @@ class kpi_generate_model extends CI_Model {
 	public function get_all_public_output(){
 		$sql = "SELECT * 
 				FROM output 
-				WHERE is_public=0";
+				WHERE is_public=1 AND done=1";
 		$query = $this->db->query($sql);
 		return $query->result_array();
 	}
@@ -293,6 +320,18 @@ class kpi_generate_model extends CI_Model {
 		$query = $this->db->query($sql);
 		$done = $query->row_array();
 		if($done)
+			return true;
+		else
+			return false;
+	}
+	
+	public function check_output_exists($name){
+		$sql = "SELECT *
+				FROM output
+				WHERE done=1 AND output_name='".$name."'";
+		$query = $this->db->query($sql);
+		$done = $query->result_array();
+		if(count($done)>0)
 			return true;
 		else
 			return false;

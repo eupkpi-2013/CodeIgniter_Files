@@ -7,8 +7,8 @@
 		</div>
 		</a>
 		<div id="user-logout" class="logout righted">
-			<a herf="">Logged in as User, </a>
-			<a href="index.html">Logout</a>
+			Logged in as User
+			<a href="index.html"><button class="button-green">Logout</button></a>
 		</div>
 		<div id="user-nav" class="nav">
 			<ul>

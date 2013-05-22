@@ -1,0 +1,10 @@
+Output:(45)Report002
+
+KPI	SubKPI	Metric	(1)baseline	(2)another result
+(4)Increased Productivity	(16)Increase in transaction volume per office	(14)No. of transaction volume per admin per system quarterly:	4	4
+(4)Increased Productivity	(17)Faculty members using technology for teaching and research	(15)No. of faculty using ICT in teaching per CU:	5	5
+(4)Increased Productivity	(17)Faculty members using technology for teaching and research	(16)No. of faculty using ICT in research per CU:	6	6
+(4)Increased Productivity	(18)Administrative staff and REPS using eUP for greater productivity	(17)No. of Admin staff using ICT per CU:	7	7
+(4)Increased Productivity	(18)Administrative staff and REPS using eUP for greater productivity	(18)No. of REPS using ICT per CU:	8	8
+(4)Increased Productivity	(19)Students using eUP for learning	(19)No. of students accessing online learning portals per CU:	9	9
+--endoffile--

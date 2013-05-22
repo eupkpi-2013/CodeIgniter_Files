@@ -1,0 +1,46 @@
+Output:(35)dsa
+
+KPI	SubKPI	Metric	(1)baseline	(2)another result
+(1)Simplified Operations	(9)Process Standardization across Constituent Universities	(1)No. of standard processes per core system across all CU's:	1	1
+(1)Simplified Operations	(10)Student Transactions Done Online	(2)No. of students doing transactions online:	2	2
+(1)Simplified Operations	(10)Student Transactions Done Online	(3)No. of processes online:	3	3
+(1)Simplified Operations	(11)Faculty, Staff and Alumni Transactions Done Online	(4)No. of Faculty doing transactions online:	4	4
+(1)Simplified Operations	(11)Faculty, Staff and Alumni Transactions Done Online	(5)No. of Admin staff and REPS doing transactions online:	5	5
+(1)Simplified Operations	(11)Faculty, Staff and Alumni Transactions Done Online	(6)Total alumni transactions done online:	6	6
+(2)Improved Efficiency	(12)Reduction in transaction processing time	(7)Total processing per major transactinos:	7	7
+(2)Improved Efficiency	(13)Reduction of paper based transaction	(8)No. of paper based transactions done online per system:	8	8
+(3)Optimal Utilization of ICT Resources	(14)Access to faculty, staff and students to learning materials	(9)No. of Campuses accessed to online journals per CU:	9	9
+(3)Optimal Utilization of ICT Resources	(15)Utilization of ICT tools in laboratory schools	(10)No. of CUs with ICT tools in Research Laboratories:	0	0
+(3)Optimal Utilization of ICT Resources	(15)Utilization of ICT tools in laboratory schools	(11)No. of Highschool teachers that integrate IT in their classes:	1	1
+(3)Optimal Utilization of ICT Resources	(15)Utilization of ICT tools in laboratory schools	(12)No. of highschools using ICT Tools:	2	2
+(3)Optimal Utilization of ICT Resources	(15)Utilization of ICT tools in laboratory schools	(13)No. of ICT equipments in K+12 laboratory schools:	3	3
+(4)Increased Productivity	(16)Increase in transaction volume per office	(14)No. of transaction volume per admin per system quarterly:	4	4
+(4)Increased Productivity	(17)Faculty members using technology for teaching and research	(15)No. of faculty using ICT in teaching per CU:	5	5
+(4)Increased Productivity	(17)Faculty members using technology for teaching and research	(16)No. of faculty using ICT in research per CU:	6	6
+(4)Increased Productivity	(18)Administrative staff and REPS using eUP for greater productivity	(17)No. of Admin staff using ICT per CU:	7	7
+(4)Increased Productivity	(18)Administrative staff and REPS using eUP for greater productivity	(18)No. of REPS using ICT per CU:	8	8
+(4)Increased Productivity	(19)Students using eUP for learning	(19)No. of students accessing online learning portals per CU:	9	9
+(5)Extensive Sharing of Information	(20)Shared services across constituent universities	(20)No. of school services across CU:	0	0
+(5)Extensive Sharing of Information	(20)Shared services across constituent universities	(21)No. of campuses using shared services (google docs, moodle) per CU:	1	1
+(5)Extensive Sharing of Information	(21)Data standardization	(22)Total no. of standard reports per system:	2	2
+(5)Extensive Sharing of Information	(21)Data standardization	(23)Total no. of Standard Documents (Records and Registries):	3	3
+(5)Extensive Sharing of Information	(21)Data standardization	(24)Total no. of standard dictionary being used per system:	4	4
+(5)Extensive Sharing of Information	(21)Data standardization	(25)Total no. of standard forms per system. (e.g. for students academics, # of standard change Mat forms:	5	5
+(5)Extensive Sharing of Information	(22)Online portals using content management systems	(26)No. of portals using Content Management System (CMS) per CU:	6	6
+(5)Extensive Sharing of Information	(22)Online portals using content management systems	(27)No. of available centralized portales per CU:	7	7
+(6)Increased Savings and Revenue	(23)Increase in donations, grants, and endowments	(28)Total no. of donors using online system:	8	8
+(6)Increased Savings and Revenue	(24)Tracking of cost centers	(29)Total Expenditures per Cost Center/Year:	9	9
+(6)Increased Savings and Revenue	(24)Tracking of cost centers	(30)Annual allocated budget per cost center:	0	0
+(6)Increased Savings and Revenue	(24)Tracking of cost centers	(31)Savings per Cost Center per Annum:	1	1
+(6)Increased Savings and Revenue	(24)Tracking of cost centers	(32)Income generated per cost centers per annum:	2	2
+(7)Improved Decision Making Capability	(25)Decisions based on timely and accurate data	(33)Time to generate a specific report requested by higher officials:	3	3
+(7)Improved Decision Making Capability	(26)Business intelligence software used for decision making	(34)No. of available dashboards for officials:	4	4
+(7)Improved Decision Making Capability	(27)Single source of truth	(35)Total no. of reports available per system:	5	5
+(7)Improved Decision Making Capability	(27)Single source of truth	(36)Total no. of data centers across all CUs:	6	6
+(8)Improve ICT Infrastructure	(28)Availability of ICT tools for infrastructure operations	(37)Total no. of PCs available to stakeholders per CU:	7	7
+(8)Improve ICT Infrastructure	(28)Availability of ICT tools for infrastructure operations	(38)Improvement of Bandwidth to all stakeholders (student, faculty, officials, academic community, and o:	8	8
+(8)Improve ICT Infrastructure	(28)Availability of ICT tools for infrastructure operations	(39)No. of servers housed per CU:	9	9
+(8)Improve ICT Infrastructure	(28)Availability of ICT tools for infrastructure operations	(40)No. of server rooms per Campus:	0	0
+(8)Improve ICT Infrastructure	(29)ICT Manpower consolidation at the level of the constituent universities	(41)Clearly defined plantilla of all ICT personell per CU:	1	1
+(8)Improve ICT Infrastructure	(29)ICT Manpower consolidation at the level of the constituent universities	(42)Clearly defined plantilla of personnel doing ICT work per CU:	2	2
+--endoffile--
