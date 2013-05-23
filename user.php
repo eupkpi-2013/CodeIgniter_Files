@@ -173,6 +173,12 @@ class User extends CI_Controller {
 		{
 			$this->load->view('kpi/'.$page);
 		} else {
+		
+			if(isset($this->session->userdata['email']))
+			{
+					$this->output->set_header("location: ".$this->session->userdata['user_type']."");
+			}
+			
 			$this->load->view('kpi/'.$page);
 		}
 	}
