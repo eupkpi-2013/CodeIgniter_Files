@@ -12,39 +12,62 @@ class kpi_generate_controller extends CI_Controller {
 	}
 	
 	public function generate($output_id){
-		$data['kpis'] = $this->kpi_generate_model->get_parent_kpis();
-		$data['subkpis'] = $this->kpi_generate_model->get_sub_kpis();
-		$data['metrics'] = $this->kpi_generate_model->get_all_metrics();
-		$data['results'] = $this->kpi_generate_model->get_all_results();
-		$data['iscus'] = $this->kpi_generate_model->get_all_iscus();
-		$data['accounts'] = $this->kpi_generate_model->get_all_accounts();
-		$data['output_types'] = $this->kpi_generate_model->get_output_types();
+		$user_id = 3; // hard coded
+		$account_id = 1; // hard coded
+		$iscu_id = 1; // hard coded
 		
-		if($output_id == "null" || $output_id == "exists"){
-			if($output_id == "exists"){
-				$data['message'] = "Report Name already exists.";
+		$forbidden = false;
+		if($account_id == 1 || $account_id == 2){
+			$data['kpis'] = $this->kpi_generate_model->get_parent_kpis();
+			$data['subkpis'] = $this->kpi_generate_model->get_sub_kpis();
+			$data['metrics'] = $this->kpi_generate_model->get_all_metrics();
+			$data['results'] = $this->kpi_generate_model->get_all_results();
+			$data['iscus'] = $this->kpi_generate_model->get_all_iscus();
+			$data['accounts'] = $this->kpi_generate_model->get_all_accounts();
+			$data['output_types'] = $this->kpi_generate_model->get_output_types();
+			if($output_id == "null" || $output_id == "exists"){
+				if($output_id == "exists"){
+					$data['message'] = "Report Name already exists.";
+				}
+				$undone_output = $this->kpi_generate_model->get_all_not_done_output($user_id);
+				foreach($undone_output as $output){
+					$this->kpi_generate_model->delete_all_output_rels($output['output_id']);
+					$this->kpi_generate_model->delete_output($output['output_id']);
+				}
 			}
-			$undone_output = $this->kpi_generate_model->get_all_not_done_output(0);
-			foreach($undone_output as $output){
-				$this->kpi_generate_model->delete_all_output_rels($output['output_id']);
-				$this->kpi_generate_model->delete_output($output['output_id']);
+			else if($output_id != "null"){
+				$data['output'] = $this->kpi_generate_model->get_output($output_id);
+				if($data['output']['user_id']!=$user_id){
+					$forbidden = true;
+				}
+				else{
+					$data['output_fields'] = $this->kpi_generate_model->get_output_fields($output_id);
+					$data['output_results'] = $this->kpi_generate_model->get_output_results($output_id);
+					$data['output_accounts'] = $this->kpi_generate_model->get_output_accounts($output_id);
+					$data['output_iscus'] = $this->kpi_generate_model->get_output_iscus($output_id);
+				}
 			}
 		}
-		else if($output_id != "null"){
-			$data['output'] = $this->kpi_generate_model->get_output($output_id);
-			$data['output_fields'] = $this->kpi_generate_model->get_output_fields($output_id);
-			$data['output_results'] = $this->kpi_generate_model->get_output_results($output_id);
-			$data['output_accounts'] = $this->kpi_generate_model->get_output_accounts($output_id);
-			$data['output_iscus'] = $this->kpi_generate_model->get_output_iscus($output_id);
+		else{
+			$forbidden = true;
 		}
-		$this->load->view('generate/head');
-		$this->load->view('generate/header');
-		$this->load->view('generate/content-generate',$data);
-		$this->load->view('generate/footer');
+		if($forbidden)
+			echo "403 Forbidden";
+		else{
+			$this->load->view('generate/head');
+			// $this->load->view('generate/header');
+			$this->load->view('kpi/header');
+			$this->load->view('kpi/banner');
+			$this->load->view('kpi/navbar_superuser');
+			$this->load->view('generate/content-generate',$data);
+			$this->load->view('generate/footer');
+		}
 	}
 	
 	public function generated()
 	{	
+		$user_id = 3; // hard coded
+		$project_id = 1;
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('name', 'name', 'required|is_unique[output.output_name]');
 		$exists = $this->kpi_generate_model->check_output_exists($_POST['name']);
@@ -111,7 +134,7 @@ class kpi_generate_controller extends CI_Controller {
 			
 			// insert to db
 			else{
-				$output_id = $this->kpi_generate_model->new_output($_POST['name'],$_POST['description'],$_POST['charttype'],$is_public,1);
+				$output_id = $this->kpi_generate_model->new_output($_POST['name'],$_POST['description'],$_POST['charttype'],$is_public, $user_id, $project_id);
 			}	
 			
 			foreach($fields_included as $field){
@@ -146,7 +169,10 @@ class kpi_generate_controller extends CI_Controller {
 			$data['output'] = $this->kpi_generate_model->get_output($output_id);	
 				
 			$this->load->view('generate/head');
-			$this->load->view('generate/header');
+			// $this->load->view('generate/header');
+			$this->load->view('kpi/header');
+			$this->load->view('kpi/banner');
+			$this->load->view('kpi/navbar_superuser');
 			$this->load->view('generate/content-generate-preview', $data);
 			$this->load->view('generate/footer');
 		}
@@ -487,39 +513,78 @@ class kpi_generate_controller extends CI_Controller {
 	}
 	
 	public function reports(){
-		$data['reports'] = $this->kpi_generate_model->get_all_done_output(0);
+		$user_id = 3; // hard coded
+		$account_id = 1; // hardcoded
+		$iscu_id = 1; // hard coded
+		$data['reports'] = $this->kpi_generate_model->get_all_done_output($user_id, $account_id, $iscu_id);
 		$data['reports'] = array_reverse($data['reports']);
+		$data['account'] = $account_id;
 		
 		$this->load->view('generate/head');
-		$this->load->view('generate/header');
+		// $this->load->view('generate/header');
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_superuser');
 		$this->load->view('generate/reports',$data);
 		$this->load->view('generate/footer');
 	}
+	
 	public function report($output_id){
-		$output = $this->kpi_generate_model->get_output($output_id);
-		if($output['output_type']!=1){
-			$hc = $this->load_highchart($output_id);
-			$subkpis = [];
-			foreach($hc[1] as $crumb){
-				array_push($subkpis, $crumb[0]);
+		$user_id = 3; // hard coded
+		$account_id = 1; // hardcoded
+		$iscu_id = 1; // hard coded
+		$output_accounts = $this->kpi_generate_model->get_output_accounts($output_id);
+		$output_iscus = $this->kpi_generate_model->get_output_iscus($output_id);
+		$output_user = $this->kpi_generate_model->get_output_user($output_id);
+		$forbidden = true;
+		if($output_user['user_id']==$user_id || $account_id==4 || $account_id==1)
+			$forbidden = false;
+		else{
+			foreach($output_iscus as $iscu){
+				if($iscu['iscu_id']==$iscu_id){
+					foreach($output_accounts as $account){
+						if($account['account_id']==$account_id){
+							$forbidden = false;
+							break;
+						}
+					}
+				}
+				if(!$forbidden){
+					break;
+				}
 			}
-			$data['highchart'] = $hc[0];
-			$data['subkpis'] = $subkpis;
 		}
-		
-		$data['output'] = $output;
-		
-		
-		$data['output_accounts'] = $this->kpi_generate_model->get_output_accounts($output_id);
-		$data['output_iscus'] = $this->kpi_generate_model->get_output_iscus($output_id);
-		$data['iscus'] = $this->kpi_generate_model->get_all_iscus();
-		$data['accounts'] = $this->kpi_generate_model->get_all_accounts();
-		$data['user'] = $this->kpi_generate_model->get_output_user($output_id);		
-		
-		$this->load->view('generate/head');
-		$this->load->view('generate/header');
-		$this->load->view('generate/report',$data);
-		$this->load->view('generate/footer');
+		if($forbidden){
+			echo "403 Forbidden";
+		}
+		else{
+			$output = $this->kpi_generate_model->get_output($output_id);
+			if($output['output_type']!=1){
+				$hc = $this->load_highchart($output_id);
+				$subkpis = [];
+				foreach($hc[1] as $crumb){
+					array_push($subkpis, $crumb[0]);
+				}
+				$data['highchart'] = $hc[0];
+				$data['subkpis'] = $subkpis;
+			}
+			
+			$data['output'] = $output;		
+			
+			$data['output_accounts'] = $this->kpi_generate_model->get_output_accounts($output_id);
+			$data['output_iscus'] = $this->kpi_generate_model->get_output_iscus($output_id);
+			$data['iscus'] = $this->kpi_generate_model->get_all_iscus();
+			$data['accounts'] = $this->kpi_generate_model->get_all_accounts();
+			$data['user'] = $this->kpi_generate_model->get_output_user($output_id);		
+			
+			$this->load->view('generate/head');
+			// $this->load->view('generate/header');
+			$this->load->view('kpi/header');
+			$this->load->view('kpi/banner');
+			$this->load->view('kpi/navbar_superuser');
+			$this->load->view('generate/report',$data);
+			$this->load->view('generate/footer');
+		}
 	}
 	
 	public function changevisibleto($output_id){

@@ -4,22 +4,10 @@ class kpi_generate_model extends CI_Model {
 	public function __construct()
 	{
 		parent::__construct();
-		$another_db_settings['hostname'] = 'localhost';
-		$another_db_settings['username'] = 'root';
-		$another_db_settings['password'] = 'lrmds';
-		$another_db_settings['database'] = 'testkpi';
-		$another_db_settings['dbdriver'] = "mysql";
-		$another_db_settings['dbprefix'] = "";
-		$another_db_settings['pconnect'] = TRUE;
-		$another_db_settings['db_debug'] = TRUE;
-		$another_db_settings['cache_on'] = FALSE;
-		$another_db_settings['cachedir'] = "";
-		$another_db_settings['char_set'] = "utf8";
-		$another_db_settings['dbcollat'] = "utf8_general_ci";
-		$this->load->database($another_db_settings);
+		
+		// $this->load->database($another_db_settings);
 
-		// $this->load->model('Model_name', '', $config);
-		// $this->load->database();
+		$this->load->database();
 		
 		$this->load->library('session');
 		$this->session->set_userdata('user', 1);
@@ -29,6 +17,7 @@ class kpi_generate_model extends CI_Model {
 		// echo var_dump($this->session->all_userdata());
 		
 	}
+	
 	public function get_parent_kpis(){
 		$project_id = $this->session->userdata('project');
 		
@@ -139,9 +128,9 @@ class kpi_generate_model extends CI_Model {
 		return $query->result_array();
 	}
 	
-	public function new_output($name, $desc, $type, $public, $project_id){
-		$sql = "INSERT INTO `output`(`output_name`, `output_description`, `output_type`, `is_public`, `done`, `project_id`) 
-				VALUES ('".$name."','".$desc."',".$type.",".$public.",0,".$project_id.")";
+	public function new_output($name, $desc, $type, $public, $user_id, $project_id){
+		$sql = "INSERT INTO `output`(`output_name`, `output_description`, `output_type`, `is_public`, `user_id`, `done`, `project_id`) 
+				VALUES ('".$name."','".$desc."',".$type.",".$public.",".$user_id.",0,".$project_id.")";
 		$query = $this->db->query($sql);
 		return $this->db->insert_id();		
 	}
@@ -239,10 +228,18 @@ class kpi_generate_model extends CI_Model {
 		return $query->result_array();
 	}
 	
-	public function get_all_done_output($user_id){
-		$sql = "SELECT * 
-				FROM output 
-				WHERE done=1 and user_id=".$user_id;
+	public function get_all_done_output($user_id, $account_id, $iscu_id){
+		$sql = "SELECT DISTINCT output.*
+				FROM output
+				LEFT JOIN output_iscus
+				ON output.output_id = output_iscus.output_id
+				LEFT JOIN output_accounts
+				ON output_iscus.output_id = output_accounts.output_id
+				WHERE done = 1
+				AND (user_id = ".$user_id."
+				OR is_public = 1
+				OR (output_accounts.accounts_id=".$account_id." 
+				AND output_iscus.iscu_id=".$iscu_id."))";
 		$query = $this->db->query($sql);
 		return $query->result_array();
 	}
@@ -307,8 +304,10 @@ class kpi_generate_model extends CI_Model {
 	}
 	
 	public function get_output_user($output_id){
-		$sql = "SELECT *
-				FROM output, users
+		$sql = "SELECT users.*
+				FROM users
+				JOIN output
+				ON users.user_id = output.user_id
 				WHERE output_id=".$output_id;
 		$query = $this->db->query($sql);
 		return $query->row_array();

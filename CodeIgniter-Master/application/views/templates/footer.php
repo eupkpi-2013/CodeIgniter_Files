@@ -1,3 +1,9 @@
-<strong>&copy; 2011</strong>	
+
+<footer>
+	<div id="login-about">
+		<a href="about.html">About</a>
+	</div>
+</footer>
+
 </body>
 </html>

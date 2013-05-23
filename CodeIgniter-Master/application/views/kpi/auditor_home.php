@@ -2,16 +2,20 @@
 	<h1>Welcome, Auditor</h1>
 	<div>
 		<ul>Unverified KPI submissions:
-		<li><a href="auditor_verify_user001.html">User001</a></li>
-		<li><a href="auditor_verify_user002.html">User002</a></li>
-		<li><a href="auditor_verify_user003.html">User003</a></li>
+		<?php foreach ($update as $update_item):				
+					if($update_item['account_id']==3)
+					{
+						echo "<li><a href='verify?q=auditor_verify_".$update_item['update_value']."'>".$update_item['update_value']."</a></li>";
+					}
+		      endforeach;
+		?>
 		</ul>
 	</div>
 	<div>
 		<ul>Recent reports:
-		<li><a href="auditor_results.html">Report1</a></li>
-		<li><a href="auditor_results.html">Report2</a></li>
-		<li><a href="auditor_results.html">Report3</a></li>
+		<li><a href="auditor_results">Report1</a></li>
+		<li><a href="auditor_results">Report2</a></li>
+		<li><a href="auditor_results">Report3</a></li>
 		</ul>
 	</div>
 </div>

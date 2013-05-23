@@ -1,5 +1,5 @@
 <div id="user-contents" class="contents">	
-	<div id="user-kpimenu" class="accordion menu lefted">
+	<div id="user-kpimenu" class="accordion lefted">
 		<div><h3>Report1</h3>
 		</div>
 		<div><h3>Report2</h3>
@@ -7,7 +7,7 @@
 		<div><h3>Report3</h3>
 		</div>
 	</div>
-	<div id="user-inside" class="inside">
+	<div id="user-inside" class="lefted">
 		<div class="resultchart"></div>
 		<div id="downloadas">Download:
 			<select>

@@ -44,10 +44,10 @@ function generate(){
 	$(document).ready(function(){
 		$(".checklist").change(function(){
 			if ($(this).is(':checked')){
-				$(this).parent().find($("input")).attr('checked', true);
+				$(this).parent().find($("input")).prop('checked', true);
 			}
 			else{
-				$(this).parent().find($("input")).attr('checked', false);
+				$(this).parent().find($("input")).prop('checked', false);
 			}
 		});
 		$("#checkpublic").change(function(){

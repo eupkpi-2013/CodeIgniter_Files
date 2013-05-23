@@ -45,13 +45,14 @@
 | the active record class
 */
 
-$active_group = 'default';
+// $active_group = 'default';
+$active_group = 'db2';
 $active_record = TRUE;
 
 $db['default']['hostname'] = 'localhost';
 $db['default']['username'] = 'root';
 $db['default']['password'] = 'lrmds';
-$db['default']['database'] = 'kpitest';
+$db['default']['database'] = 'testkpi';
 $db['default']['dbdriver'] = 'mysql';
 $db['default']['dbprefix'] = '';
 $db['default']['pconnect'] = TRUE;
@@ -63,6 +64,19 @@ $db['default']['dbcollat'] = 'utf8_general_ci';
 $db['default']['swap_pre'] = '';
 $db['default']['autoinit'] = TRUE;
 $db['default']['stricton'] = FALSE;
+
+$db['db2']['hostname'] = 'localhost';
+$db['db2']['username'] = 'root';
+$db['db2']['password'] = 'lrmds';
+$db['db2']['database'] = 'testkpi2';
+$db['db2']['dbdriver'] = "mysql";
+$db['db2']['dbprefix'] = "";
+$db['db2']['pconnect'] = TRUE;
+$db['db2']['db_debug'] = TRUE;
+$db['db2']['cache_on'] = FALSE;
+$db['db2']['cachedir'] = "";
+$db['db2']['char_set'] = "utf8";
+$db['db2']['dbcollat'] = "utf8_general_ci";
 
 
 /* End of file database.php */

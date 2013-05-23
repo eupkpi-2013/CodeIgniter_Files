@@ -50,6 +50,39 @@ $route['generated'] = "kpi_generate_controller/generated";
 $route['generate/(:any)'] = "kpi_generate_controller/generate/$1";
 $route['generate'] = "kpi_generate_controller/generate/null";
 
+//$route['user_rate.html'] = "";
+$route['shit'] = "user/shit";
+$route['auditor'] = "user/view/auditor_home";
+$route['user'] = "user/view/user_home";
+$route['rate'] = "user/viewmetric";
+$route['index'] = "user/index";
+$route['submit'] = "user/submit";
+$route['deactivate'] = "user/deactivate_value";
+$route['edit'] = "user/edit_values";
+$route['editvalue'] = "user/edit_a_value";
+$route['changevalue'] = "user/changevalue";
+$route['auth'] = "user/auth";
+$route['login'] = "user/login";
+$route['signup'] = "user/signup";
+$route['delete_account'] = "user/delete_account";
+$route['add_account'] = "user/add_account";
+$route['verify'] = "user/viewaccountid";
+$route['auditor_verify'] = "user/viewuser";
+$route['user_rated'] = "user/user_rated";
+$route['default_controller'] = "welcome";
+$route['404_override'] = '';
+$route['(:any)'] = 'user/view/$1';
+
+
+// for superuser kpi
+$route['addKPI'] = 'user/addKPI';
+$route['addSubKPI'] = 'user/addSubKPI';
+$route['addMetric'] = 'user/addMetric';
+$route['addMetric1'] = 'user/addMetric1';
+//$route['edit'] = "user/viewedit";
+
+
+
 
 /* End of file routes.php */
 /* Location: ./application/config/routes.php */
