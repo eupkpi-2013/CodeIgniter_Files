@@ -138,12 +138,17 @@ class User extends CI_Controller {
 		
 		//$data['title'] = ucfirst($page);
 		
-		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect'))) {
+		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect')) && $page!='error') {
 			
 			if(!isset($this->session->userdata['email']))
 			{
 				$this->output->set_header('location: index');
 			}
+			
+			
+			$user = strtok($page, "_");
+			
+			$this->usertype_checker($user);
 			
 			$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
 				
@@ -152,7 +157,6 @@ class User extends CI_Controller {
 			$data['update'] = $this->user_db->updates($iscu_id);
 			$data['checker'] = "empty";
 			
-			$user = strtok($page, "_");
 			
 			if ( $page == 'superuser_activate' ) $this->activate();
 			else if ($page != 'superuser_accounts' && $page != 'superuser_addaccount') {
@@ -165,8 +169,10 @@ class User extends CI_Controller {
 			
 			}
 			else $this->view_accounts($page);
-		}
-		else {
+		} else if($page=='error')
+		{
+			$this->load->view('kpi/'.$page);
+		} else {
 			$this->load->view('kpi/'.$page);
 		}
 	}
@@ -687,6 +693,14 @@ class User extends CI_Controller {
 		
 		$this->session->sess_destroy();
 		$this->output->set_header('location: index');
+	}
+	
+	public function usertype_checker($site)
+	{
+		if($this->session->userdata('user_type')!=$site)
+		{
+			$this->output->set_header('location: error');
+		}
 	}
 }
 
