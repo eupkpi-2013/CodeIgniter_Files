@@ -19,12 +19,16 @@
 	</div>	
 	<div id="user-inside" class="inside">
 		<?php
+			foreach ($kpi as $kpi_item):
+				if ($kpi_item['kpi_id'] == (empty($data['id']) ? $_GET['id'] : $data['id'])) echo "<h3>Add Metric under <em>".$kpi_item['kpi_name']."</em> KPI</h3>";
+			endforeach;
+		?>
+		<?php
 			$data = $this->session->flashdata('errors');
 			if ($data['errors']) {
 				echo $data['errors'];
 			}
 		?>
-		<button class="left" value="Add New Row" class="tablebuttons" onclick="addRow('metric')">Add Row</button>	
 		<?php echo form_open('addMetric1'); ?>
 		<input type="hidden" name="id" value="<?php echo (empty($data['id']) ? $_GET['id'] : $data['id']);?>"/>
 		
@@ -33,32 +37,11 @@
 			<td>Metric Name</td>
 			</tr>
 			<tr>
-				<td><input name="metric_name0"></input></td>
+				<td><input name="metric_name"></input></td>
 			</tr>
 		</table>
-		<button class="left">Save</button>
+		<button name="button" value="superuser_addbreakdown">Add Breakdown</button>
+		<button name="button" value="superuser_edit">Done</button>
 		</form>
 	</div>
 </div>
-
-<script>
-// Add Table Row
-var currentRowCount=1;
-function addRow(tableID) {
- 
-    var table = document.getElementById(tableID);
- 
-    var rowCount = table.rows.length;
-    var row = table.insertRow(rowCount);
- 
-    var cell1 = row.insertCell(0);
-    var element1 = document.createElement("input");
-    element1.type = "text";
-	element1.setAttribute("class", "ui-state-default");
-	element1.setAttribute("name", "metric_name"+currentRowCount);
-	cell1.appendChild(element1);
-			
-	table.rows[0].cells[0].childNodes[0].checked = false;
-	currentRowCount++;
-}
-</script>

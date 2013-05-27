@@ -79,7 +79,7 @@ $route['addKPI'] = 'user/addKPI';
 $route['addSubKPI'] = 'user/addSubKPI';
 $route['addMetric'] = 'user/addMetric';
 $route['addMetric1'] = 'user/addMetric1';
-//$route['edit'] = "user/viewedit";
+$route['addBreakdown'] = 'user/addBreakdown';
 
 
 

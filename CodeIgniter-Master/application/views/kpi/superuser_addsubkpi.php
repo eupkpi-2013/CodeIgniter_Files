@@ -35,7 +35,6 @@
 		<input type="text" name="subkpi_name" /><br><br>
 		<input type="hidden" name="id" value="<?php echo (empty($data['id']) ? $_GET['id'] : $data['id']);?>"/>
 		<button class="left">Next</button>
-		<a href="superuser_addkpi"><button type="button" class="left">Done</button></a>
 		</form>
 	</div>
 </div>

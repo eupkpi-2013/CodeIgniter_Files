@@ -64,7 +64,7 @@
 				echo '</select>';
 			endif;
 			?>
-				<button class="righted button-green" type="submit"><?php echo ($edit ? 'Confirm' : 'Add') ?></button>
+				<button class="righted" type="submit"><?php echo ($edit ? 'Confirm' : 'Add') ?></button>
 			<?php echo form_close(); ?>
 		</div>
 	<div></div>

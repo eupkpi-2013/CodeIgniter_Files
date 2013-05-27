@@ -21,69 +21,97 @@
 	<div id="user-inside" class="inside">
 		<?php
 			if($checker=='notempty'):
-				$ctr = 0;
-				foreach($metric as $metric_item):
-					foreach ($subkpi as $subkpi_item): 
-						 
-							if($subkpi_item['kpi_id']==$metric_item['kpi_id'])
-							 {
-								foreach ($kpi as $kpi_item):
-									if($kpi_item['kpi_id']==$subkpi_item['parent_kpi'])
-									{
-										$parent = $kpi_item['kpi_name'];
-									}
-								endforeach;
-								
-								if($ctr==0)
-								{
-									$subparent = $subkpi_item['kpi_name'];
-									echo "<h2>".$parent." > ".$subparent."</h2>";
-									echo "<table class='kpitable'><tr>
-										  <th>Metric Name</th>
-										  <th>Data Type</th></tr>";
-									$ctr = 1;
-								}
-							
-					         }
-					
-					endforeach;
-									// IMPORTANT
-									echo "<tr>";
-									echo "<td>".$metric_item['field_name']."</td>
-										  <td>Text</td>";
-									echo "</tr>";
-					
+				//print_r("<pre>"); print_r($submetric); print_r("</pre>");
+				
+				echo '<h2>'.$current_kpi.' > '.$current_subkpi.'</h2>';
+				echo '<table class="kpitable">
+					  <tr>
+						<th>Metric Name</th>
+						<th>Data Type</th>
+						<th>Status</th>
+					  </tr>';
+					if (empty($metric)) echo '<tr><td>None</td><td>None</td><td>None</td></tr>';
+				foreach ($metric as $metric_item):
+					echo '<tr><td>'.$metric_item['field_name'].'</td><td>Text</td><td>'.($metric_item['active'] ? 'Active' : 'Inactive').'</td></tr>';
+					if ( $metric_item['has_breakdown'] ):
+						echo '<tr><td colspan=3>';
+						echo '<table class="submetrictable">
+								<tr>
+								<th>SubMetric Name</th>
+								<th>Data Type</th>
+								<th>Status</th>
+								</tr>';
+						foreach ($submetric as $submetric_item):
+							if ( $submetric_item['field_id']==$metric_item['field_id'] ):
+								echo '<tr><td>'.$submetric_item['breakdown_name'].'</td><td>Text</td><td>'.($submetric_item['active'] ? 'Active' : 'Inactive').'</td></tr>';
+							endif;
+						endforeach;
+						echo '</table>';
+						echo '</td></tr>';
+					endif;
 				endforeach;
-								   echo "</table>";
-								   $url1 = str_replace(" ","_", $parent);
-								   $url2 = str_replace(" ","_", $subparent);
-								   echo "<a href='editvalue?q=".$url1."/".$url2."'><button class='righted'>Edit</button>";
+				echo '</table>';
+				
+				echo '<a href="editvalue?q='.str_replace(" ", "_", $current_kpi).'/'.str_replace(" ", "_", $current_subkpi).'"><button class="righted">Edit</button></a>';
 			
 			elseif($checker=='editing'):
-				$kpi_id = $current_kpi; // galing data ung $current_kpi
-				$subkpi_id = $current_subkpi;
+				//echo "<a href='edit?q=".$kpi_value_id['kpi_name']."/".$subkpi_value_id['kpi_name']."'><button type='button'>Back</button></a>"; back button to
+				echo "<h2>".$kpi_value_id['kpi_name']." > ".$subkpi_value_id['kpi_name']."</h2>";
 				
-				echo "<h2>".$kpi_id." > ".$subkpi_id."</h2>";
+				echo $this->session->flashdata('errors');
+				
 				echo "<form method='post' action='changevalue'><table>";
-				echo "<tr><td><label>KPI Name</label><input class='input-longer' value='".$kpi_id."' name='kpi'></input><input type='hidden' value='".$kpi_value_id['kpi_id']."' name='kpi_id'></input></td><td><a href='deactivate?q=1/".$kpi_value_id['kpi_id']."'><button type='button'>Deactivate</button></a></td></tr>";
-				echo "<tr><td><label>SubKPI Name</label><input class='input-longer' value='".$subkpi_id."' name='subkpi'></input><input type='hidden' value='".$subkpi_value_id['kpi_id']."' name='subkpi_id'></input></td><td><a href='deactivate?q=2/".$subkpi_value_id['kpi_id']."'><button type='button'>Deactivate</button></a></td></tr>";
-				echo "</table><table class='kpitable' id='metric'>
+				echo "<tr><td><label>KPI Name</label><input value='".$kpi_value_id['kpi_name']."' name='kpi'></input><input type='hidden' value='".$kpi_value_id['kpi_id']."' name='kpi_id'></input></td>";
+				
+				if ($kpi_value_id['active']) echo "<td><a href='deactivate?q=1/".$kpi_value_id['kpi_id']."'><button type='button'>Deactivate</button></a></td>";
+				
+				echo "</tr>";
+				
+				echo "<tr><td><label>SubKPI Name</label><input value='".$subkpi_value_id['kpi_name']."' name='subkpi'></input><input type='hidden' value='".$subkpi_value_id['kpi_id']."' name='subkpi_id'></input></td>";
+				
+				if ($subkpi_value_id['active']) echo "<td><a href='deactivate?q=2/".$subkpi_value_id['kpi_id']."'><button type='button'>Deactivate</button></a></td>";
+				
+				echo "</tr>";
+				
+				echo "</table>";
+				echo "<table class='kpitable' id='metric'>
 					  <tr><th>Metric Name</th>
 					  <th>Data Type</th>
-					  <th><button type='button' onClick=addRow('metric')>Add Metric</button></th></tr>";
-						foreach($metric as $metric_item2):
-							echo "<tr><td><input class='input-longer' value='".$metric_item2['field_name']."' name='metric[]'></td><input type='hidden' value='".$metric_item2['field_id']."' name='metric_id[]'></input>";
-							echo "<td><select>
-									  <option>Text</option>
-									  <option>Integer</option>
-									  <option>Boolean</option>
-									  <option>Time Range</option>
-									  </select></td> 
-								  <td><a href='deactivate?q=3/".$metric_item2['field_id']."'><button type='button'>Deactivate</button></a>
-								  </td></tr>";
-						endforeach;
+					  <th colspan='2'><button type='button' onClick=addRow('metric')>Add Metric</button></th></tr>";
+					foreach($metric as $metric_item2):
+						echo "<tr id='".$metric_item2['field_id']."'><td><input value='".$metric_item2['field_name']."' name='metric[]'></td><input type='hidden' value='".$metric_item2['field_id']."' name='metric_id[]'></input>";
+						echo "<td><select>
+								  <option>Text</option>
+								  <option>Integer</option>
+								  <option>Boolean</option>
+								  <option>Time Range</option>
+								  </select></td>";
+						if ($metric_item2['active']) echo "<td><a href='deactivate?q=3/".$metric_item2['field_id']."'><button type='button'>Deactivate</button></a>
+						</td>";
+						else echo "<td></td>";
+						if ( $metric_item2['has_breakdown'] ):
+							echo "</tr>";
+							echo "<tr><td colspan=3><table id='breakdown".$metric_item2['field_id']."'><tr><th>Breakdown Name</th><th>Type</th><th><button type='button' onClick=addRow('breakdown".$metric_item2['field_id']."')>Add Breakdown</button></th></tr>";
+							//echo "<table class='kpitable' id='submetric'><tr><th>SubMetric Name</th><th>Data Type</th><th><a href='superuser_addbreakdown?id=".$metric_item2['field_id']."'><button type='button'>Add Breakdown</button></a></th></tr>";
+							foreach ($submetric as $submetric_item):
+								if ( $metric_item2['field_id']==$submetric_item['field_id'] ):
+									echo "<tr><td><input value='".$submetric_item['breakdown_name']."' name='breakdown[]'></input></td><input type='hidden' value='".$submetric_item['breakdown_id']."' name='breakdown_id[]'></input>";
+									echo "<td><select>
+									<option>Text</option>
+									<option>Integer</option>
+									<option>Boolean</option>
+									<option>Time Range</option></select>
+									</td><td>".($submetric_item['active'] ? "<a href='deactivate?q=4/".$submetric_item['breakdown_id']."'><button type='button'>Deactivate</button></a>" : "" )."</td></tr>";
+								endif;
+							endforeach;
+							echo "</table></td></tr>";
+						else:
+							echo "<td><button type='button' onClick=addBreakdown('".$metric_item2['field_id']."')>Create Breakdown for this Metric</button></td></tr>";
+						endif;
+					endforeach;
 				echo "</table>";
-				echo "<button class='righted'>Save</button></form>";
+				echo "<button class='righted'>Save</button>";
+				echo "</form>";
 			else:
 				echo "<p>Choose a KPI to edit on the left.</p><br>
 					  <a href='superuser_addkpi'><button>Add KPI</button></a>";
@@ -94,6 +122,24 @@
 
 <script>
 
+function addBreakdown(rowID) {
+	var table = document.getElementById('metric');
+	var row = document.getElementById(rowID);
+	row.deleteCell(3);
+	
+	if (!document.getElementById('breakdown'+rowID)) {
+		
+		var inner = "<table id='breakdown"+rowID+"'><tr><th>Breakdown Name</th><th>Type</th><th><button type='button' onClick=addRow('breakdown"+rowID+"')>Add Breakdown</button></th></tr><tr><td><input type='text' name='breakdown"+rowID+"_name[]' placeholder='Breakdown Name'></td><td><select><option>Text</option><option>Integer</option><option>Boolean</option><option>Time Range</option></select></td><td></td></tr></table>";
+		
+		row = table.insertRow(row.rowIndex+1);
+		cell = row.insertCell();
+		cell.colSpan = 3;
+		
+		cell.innerHTML = inner;
+		
+	}
+}
+
 
 // Add Table Row
 var currentRowCount=1;
@@ -102,17 +148,18 @@ function addRow(tableID) {
     var table = document.getElementById(tableID);
  
     var rowCount = table.rows.length;
-    var row = table.insertRow(rowCount);
+    var row = table.insertRow(-1);
  
-    var cell1 = row.insertCell(0);
-    var element1 = document.createElement("input");
-    element1.type = "text";
-	element1.setAttribute("name", "metric_name[]");
-	element1.setAttribute("class", "input-longer");
-	cell1.appendChild(element1);
+    var cell = row.insertCell(0);
+    var element = document.createElement("input");
+    element.type = "text";
+	element.setAttribute("name", tableID+"_name[]");
+	if (tableID == 'metric')element.setAttribute("placeholder", "Metric Name");
+	else element.setAttribute("placeholder", "Breakdown Name")
+	cell.appendChild(element);
 	
-	var cell2 = row.insertCell(1);
-	var element2 = document.createElement("select");
+	cell = row.insertCell(1);
+	element = document.createElement("select");
 	
 	var choices = new Array();
 	choices[0] = "Text";
@@ -125,10 +172,10 @@ function addRow(tableID) {
 		option.text = choices[i];
 		option.value = choices[i];
 		
-		element2.appendChild(option);
+		element.appendChild(option);
 	}
 	
-	cell2.appendChild(element2);
+	cell.appendChild(element);
 			
 	table.rows[0].cells[0].childNodes[0].checked = false;
 	currentRowCount++;

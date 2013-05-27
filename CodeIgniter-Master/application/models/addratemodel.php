@@ -13,6 +13,7 @@
 			// }
 		
 		public function adduserrate($field_id, $value, $user_id, $results_id){
+			$added = true;
 			if($value==""){
 				$sql = "DELETE FROM `field_values`
 						WHERE field_id=".$field_id." AND user_id=".$user_id." AND results_id=".$results_id;
@@ -29,13 +30,17 @@
 							VALUES (".$field_id.",".$value.",".$user_id.",1,".$results_id.")";
 					$this->db->query($sql);
 				}
-				else{
+				else if($result['value'] != $value){
 					$sql = "UPDATE field_values
 							SET value=".$value."
 							WHERE value_id=".$result['value_id'];
 					$query = $this->db->query($sql);
 				}
+				else{
+					$added = false;
+				}
 			}
+			return $added;
 		}
 		
 		public function getrating($field_id, $user_id, $results_id){

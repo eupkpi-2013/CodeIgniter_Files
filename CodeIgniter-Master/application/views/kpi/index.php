@@ -116,7 +116,7 @@
 	</div>
 	<div class="login splash"></div>	
 	<div class="login">
-		<button><a href="public_results.html">See Public Reports</a></button>
+		<button><a href="publicreports">See Public Reports</a></button>
 	</div>
 
 

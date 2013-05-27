@@ -17,24 +17,32 @@
 			$this->load->database();
 		}
 		
-		public function sidebar()
+		public function sidebar($active='false')
 		{
-			$query = $this->db->get_where('kpi', array('leaf_node'=> 0, 'active' => true));
+			$where = ($active ? array('leaf_node'=>0) : array('leaf_node'=>0, 'active'=>true));
+			$query = $this->db->get_where('kpi', $where);
 			return $query->result_array();
 		}
 		
-		public function subsidebar()
+		public function subsidebar($active='false')
 		{
-			$query = $this->db->get_where('kpi', array('leaf_node'=> 1, 'active' => true));
+			$where = ($active ? array('leaf_node'=>1) : array('leaf_node'=>1, 'active'=>true));
+			$query = $this->db->get_where('kpi', $where);
 			return $query->result_array();
 		}
 		
-		public function query_metric($current_subkpi)
+		public function query_metric($current_subkpi, $active='false')
 		{
 			$query = $this->db->get_where('kpi', array('kpi_name'=> $current_subkpi));
 			$query_item = $query->row_array();
-			
-			$query = $this->db->get_where('fields', array('kpi_id'=> $query_item['kpi_id'], 'active' => true));
+			$where = ($active ? array('kpi_id'=> $query_item['kpi_id']) : array('kpi_id'=> $query_item['kpi_id'], 'active' => true));
+			$query = $this->db->get_where('fields', $where);
+			return $query->result_array();
+		}
+		
+		public function query_submetric($current_metric)
+		{
+			$query = $this->db->get_where('breakdown', array('field_id'=>$current_metric));
 			return $query->result_array();
 		}
 		
@@ -72,17 +80,17 @@
 			return $query->result_array();
 		}
 		
-/* 		public function allmetric() jasper's file
+		public function allmetric1()
 		{
 			$query = $this->db->order_by('field_id', 'asc')->get('fields');
 			return $query->result_array();
-		} */
+		}
 		
 		public function allmetric($iscu_id, $identifier) // ren
 		{
 			$this->db->query("drop view IF EXISTS all_results");
-			$this->db->query("create view all_results as SELECT kpi_id,results_id,tag,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
-			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.tag='$identifier'");	
+			$this->db->query("create view all_results as SELECT kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
+			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id=(select value_status_id from value_status where value_status_name='$identifier')");	
 			$query = $this->db->get('all_results');
 			$this->db->query("drop view all_results");
 			return $query->result_array();
@@ -131,6 +139,8 @@
 				$sql = "insert into users (email, fname, lname, status_id) values (?, ?, ?, ?)";
 				$this->db->query($sql, $data);
 			}
+			
+			return $this->db->insert_id();
 		}
 		
 		public function get_accounts($where=NULL) {
@@ -161,11 +171,11 @@
 			return $this->db->query($select.$from.$where);
 		}
 		
-		public function adduserrate() {
-			foreach(array_combine($_POST['metric_item'],$_POST['id']) as $value => $id) {
-				$this->db->query("INSERT INTO field_values(field_id, value, user_id, tag, results_id) VALUES ('$id','$value', 1, 'unverified', 1)");
-			}
-		}
+		// public function adduserrate() {
+			// foreach(array_combine($_POST['metric_item'],$_POST['id']) as $value => $id) {
+				// $this->db->query("INSERT INTO field_values(field_id, value, user_id, tag, results_id) VALUES ('$id','$value', 1, 'unverified', 1)");
+			// }
+		// }
 		
 		
 		public function submitRates() {
@@ -204,18 +214,24 @@
 		
 		function addMetric() {
 			$id = $this->input->post("id");
-
-			$metricCount = 0;
+			$metric = $this->input->post("metric_name");
 			
-			while(isset($_POST["metric_name".$metricCount])){
-				$metric = $this->input->post("metric_name".$metricCount);
-				/* if (!empty($metric)) */ $this->db->query("INSERT INTO fields (kpi_id, field_name, type, active) VALUES ('$id', '$metric', 'int', '0')");        
-				$metricCount++;
-			}
+			$this->db->query("insert into fields (kpi_id, field_name, type, active) values ('$id', '$metric', 'int', '0')");
 
 			$query = $this->db->query("SELECT parent_kpi FROM KPI WHERE kpi_id='$id'");
 			$query = $query->result_array();
 			return $query[0];
+		}
+		
+		public function addBreakdown() {
+			$id = $this->input->post('id');
+			
+			foreach ( $this->input->post('breakdown_name') as $breakdown_item ):
+				echo $breakdown_item;
+				$this->db->query("insert into breakdown (breakdown_name, field_id, active) values ('$breakdown_item', '$id' ,'0')");
+				$this->db->update("update fields set has_breakdown=1 where field_id=$id");
+			endforeach;
+			return $this->db->query("select * from fields where field_id=$id")->result_array()[0];
 		}
 		
 		public function getKpiId($kpi_name){
@@ -247,17 +263,6 @@
 		}
 		
 		public function change_value() {
-			/* echo '<pre>'; /* print_r($this->input->post(NULL, true));  
-			$asdf = $this->input->post('metric_name');
-			print_r($asdf);
-			if (empty($asdf)) echo 'empty';
-			else echo 'asdf';
-			echo '</pre>';
-			
-			foreach ($asdf as $item):
-				echo (empty($item) ? 'empty item' : 'not empty item');
-				echo $item;
-			endforeach; */
 			
 			$kpi_value = $this->input->post('kpi');
 			$kpi_id = $this->input->post('kpi_id');
@@ -267,18 +272,38 @@
 			$subkpi_id = $this->input->post('subkpi_id');
 			$this->db->query("UPDATE kpi SET kpi_name='$subkpi_value' WHERE kpi_id=$subkpi_id");
 			
-			foreach(array_combine($this->input->post('metric'),$this->input->post('metric_id')) as $field_name => $field_id):
+			if ($this->input->post('metric') && $this->input->post('metric_id')) $holder = array_combine($this->input->post('metric_id'), $this->input->post('metric'));
+			else $holder = array();
+			
+			foreach ($holder as $field_id => $field_name):
 				$this->db->query("UPDATE fields SET field_name='$field_name' WHERE field_id=$field_id");
-			endforeach;
+			endforeach; 
 			
 			$new_metric = $this->input->post('metric_name');
-			$type = 'int'; // IMPORTANT, FIX !!!
+			$type = 'int'; // IMPORTANT, FIX data type implementation!!!
 			if ( !empty($new_metric) ) {
 				foreach ($new_metric as $new_metric_item):
 					if ( !empty($new_metric_item) )
 						echo ($this->db->query("insert into fields (field_name, kpi_id, type, active) values ('$new_metric_item', $subkpi_id, '$type', false)") ? 'yay' : 'nay');
 				endforeach;
 			}
+			
+			if ( $this->input->post('breakdown') && $this->input->post('breakdown_id') ) $holder = array_combine($this->input->post('breakdown_id'), $this->input->post('breakdown'));
+			else $holder = array();
+			
+			foreach ($holder as $breakdown_id => $breakdown_name):
+				$this->db->query("update breakdown set breakdown_name='$breakdown_name' where breakdown_id=$breakdown_id");
+			endforeach;
+			
+			foreach ($this->input->post('metric_id') as $metric_id):
+				if ($this->input->post('breakdown'.$metric_id.'_name')) {
+					foreach ($this->input->post('breakdown'.$metric_id.'_name') as $breakdown_item):
+						$this->db->query("insert into breakdown (breakdown_name, field_id, active) values ('$breakdown_item', '$metric_id', '0')");
+					endforeach;
+					$this->db->query("update fields set has_breakdown = 1 where field_id='$metric_id'");
+				}
+			endforeach;
+			
 			
 			$kpi_value = str_replace(" ", "_", $kpi_value);
 			$subkpi_value = str_replace(" ", "_", $subkpi_value);
@@ -311,17 +336,116 @@
 		public function deactivate_3($id)
 		{
 			$this->db->query("UPDATE fields SET active=0 WHERE field_id=$id");
+			
+			$query = $this->db->get_where('fields', array('field_id'=>$id));
+			foreach ($query->result_array() as $query_item):
+				if ($query_item['has_breakdown']):
+					$submetric = $this->db->get_where('breakdown', array('field_id'=>$query_item['field_id']));
+					foreach ($submetric->result_array() as $submetric_item):
+						$this->deactivate_4($submetric_item['breakdown_id']);
+					endforeach;
+				endif;
+			endforeach;
+		}
+		
+		public function deactivate_4($id) {
+			$this->db->query("UPDATE breakdown SET active=0 WHERE breakdown_id=$id");
 		}
 		
 		public function get_inactive() {
 			$this->db->query("drop view if exists active_fields");
-			if ($this->db->query("create view active_fields as select iscu_field.field_id, fields.field_name, fields.kpi_id from fields, iscu_field, kpi where fields.field_id = iscu_field.field_id AND fields.kpi_id = kpi.kpi_id AND fields.active = 0")) {
+			if ($this->db->query("create view active_fields as select iscu_field.field_id, fields.field_name, fields.kpi_id, fields.has_breakdown from fields, iscu_field, kpi where fields.field_id = iscu_field.field_id AND fields.kpi_id = kpi.kpi_id AND fields.active = 0")) {
 				$return = $this->db->query("select * from active_fields group by field_id");
 				$return1 = $this->db->query("select kpi_id, kpi_name from kpi where kpi_id in (select distinct(parent_kpi) from kpi where kpi_id in (select distinct(kpi_id) from active_fields)) order by kpi_id");
 				$return2 = $this->db->query("select kpi_id, kpi_name, parent_kpi from kpi where kpi_id in (select distinct(kpi_id) from active_fields) order by kpi_id");
 			}
 			$this->db->query("drop view if exists active_fields");
-			return array($return, $return1, $return2);
+			return array($return->result(), $return1->result(), $return2->result());
+		}
+		
+		public function get_inactive_submetric() {
+			$query = $this->db->query("select field_id, field_name, kpi_id, has_breakdown from fields where field_id in (select distinct(field_id) from breakdown)");
+			
+			$submetric = $this->db->query("select * from breakdown where field_id in (select iscu_field.field_id from iscu_field, fields where iscu_field.field_id = fields.field_id AND fields.has_breakdown = 1)");
+			
+			return array($query->result(), $submetric->result());
+		}
+		
+		public function iscu_sidebar() {
+			$query = $this->db->get_where('iscu', array('project_id'=>1));
+			return $query->result_array();
+		}
+		
+		public function assignISCU() {
+			$kpi = $this->input->post("kpi");
+			$subkpi = $this->input->post("subkpi");			
+			$metric = $this->input->post("metric");
+			
+			$iscu = $this->input->post("iscu");
+			$query = $this->db->query("SELECT iscu_id FROM iscu WHERE iscu='$iscu'");
+			$query = $query->result_array();
+			$iscu_id = $query[0]['iscu_id'];
+			
+			foreach ($metric as $metric_id):
+				$this->db->query("INSERT INTO iscu_field (iscu_id, field_id) VALUES ('$iscu_id', '$metric_id')"); 
+			endforeach;
+		}
+		
+		public function get_all_iscus(){
+			$query = $this->db->get('iscu');
+			return $query->result_array();
+		}
+		
+		public function get_all_accounts(){
+			$query = $this->db->get('accounts');
+			return $query->result_array();
+		}
+		
+		public function get_answered_fields($iscu_id, $results_id){
+			$sql = "SELECT * 
+					FROM `field_values`
+					JOIN iscu_field
+					ON field_values.field_id =iscu_field.field_id
+					WHERE field_values.results_id = ".$results_id."
+					AND iscu_id = ".$iscu_id;
+			echo $sql;
+			$query = $this->db->query($sql);
+			return $query->result_array();			
+		}
+		
+		public function get_all_active_fields(){
+			$sql = "SELECT *
+					FROM fields
+					WHERE active=1";
+			$query = $this->db->query($sql);
+			return $query->result_array();			
+		}
+		
+		public function get_rejected_fields($iscu_id){
+			$sql = "SELECT * FROM `field_values`
+					JOIN iscu_field
+					ON field_values.field_id=iscu_field.field_id
+					WHERE value_status_id = 1
+					AND iscu_id=".$iscu_id;
+			echo $sql;
+			$query = $this->db->query($sql);
+			return $query->result_array();
+		}
+		
+		public function get_iscu($iscu_id){
+			$sql = "SELECT * FROM iscu
+					WHERE iscu_id=".$iscu_id;
+			echo $sql;
+			$query = $this->db->query($sql);
+			return $query->row_array();
+		}
+		
+		public function get_user($user_id){
+			$sql = "SELECT * FROM users
+					WHERE user_id=".$user_id;
+			echo $sql;
+			$query = $this->db->query($sql);
+			return $query->row_array();		
 		}
 	}
 ?>

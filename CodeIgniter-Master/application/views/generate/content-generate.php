@@ -169,6 +169,7 @@ function generate(){
 		echo '</ul>';
 		echo '<ul class="iscu-list">';
 		foreach($iscus as $iscu){
+			if($iscu['iscu']!="Admin"){
 				echo '<li><input class="checklist" id="checkiscu'.$iscu['iscu_id'].'" name="checkiscu'.$iscu['iscu_id'].'"type="checkbox"  class="" ';
 				if(isset($output)){
 					foreach($output_iscus as $output_iscu){
@@ -176,8 +177,9 @@ function generate(){
 							echo 'checked';
 					}
 				}
-			echo ' >'.$iscu['iscu'].'</input><br>';
-			echo'</li>';
+				echo ' >'.$iscu['iscu'].'</input><br>';
+				echo'</li>';
+			}
 		}
 		echo '</ul>';
 	?>
@@ -191,5 +193,5 @@ function generate(){
 		<input type="checkbox">Account2</input><br>
 		<input type="checkbox">Account3</input><br> -->
 	</form>
-	<button onclick="generate()">Generate</button	
+	<button onclick="generate()">Generate</button>	
 </div>

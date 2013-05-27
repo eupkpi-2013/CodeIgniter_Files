@@ -12,7 +12,7 @@
 						}
 
 				 endforeach; 
-			 echo "<div><li><a href='#'><button>Add SubKPI</button></a></li></div>";
+			 echo "<div><li><a href='superuser_addsubkpi?id=".$kpi_item['kpi_id']."'><button>Add SubKPI</button></a></li></div>";
 			 echo "</ul></div>";
 		endforeach; 
 		?>

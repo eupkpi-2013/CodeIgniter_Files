@@ -30,7 +30,7 @@ function confirmDelete(id) {
 		endforeach;
 		?>
 		</table>
-		<a href="superuser_addaccount"><button class="lefted button-green">Add an account</button></a>
+		<a href="superuser_addaccount"><button class="righted">Add an account</button></a>
 		</div>
 	</div>
 	<div></div>

@@ -128,11 +128,13 @@
 	</script>
 <div id="user-contents" class="contents">
 	<?php
+		echo '<a href="'.site_url().'/publicreports"><button class="righted">Back to Public Reports</button></a>';
 		echo '<h3>'.$output['output_name'].'</h3>';
 		$timestamp = strtotime($output['timestamp']);
 		echo '<p>Published: '.date("F j, Y, g:i a", $timestamp).' by '.$user['fname'].' '.$user['lname'].'</p>';
 		echo '<p>';
-		echo '<button id="editv-button" onclick="togglevisible()">Edit</button>';
+		if($user['user_id']==$this->session->userdata('user_id') || $this->session->userdata('account_id')==1)
+			echo '<button id="editv-button" onclick="togglevisible()">Edit</button>';
 		echo '<button id="savev-button" class="button-green" onclick="savevisible()">Save</button>';
 		echo 'Visible to: ';
 		if($output['is_public'])
