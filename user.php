@@ -8,12 +8,21 @@ class User extends CI_Controller {
 		$this->load->model('user_db');
 		$this->load->library('session');
 		
-	
+		$newdata = array(
+					'iscu_id' => '',
+					'user_id' => '',
+					'account_id' => '');
+		$this->session->set_userdata($newdata);
 	}
 	
+	public function index() { // IMPORTANT TO FIX !!!
+		if($this->session->userdata('user_name')!='') $this->view('user');
+		else {
+			$this->view('index');
+		}
+	}
 	
 	public function signup() { // done (?)
-	
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
 		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
@@ -75,8 +84,6 @@ class User extends CI_Controller {
 	}
 	
 	public function auth() {
-		
-	
 		require_once 'kpi_sources/openid.php';
 		$openid = new LightOpenID("localhost");
 		try {
@@ -86,7 +93,6 @@ class User extends CI_Controller {
 			  'namePerson/last',
 			  'contact/email',
 			);
-			echo $openid->required['contact/email'];
 			//header('Location: ' . $openid->authUrl());
 			$openid->returnUrl = 'http://localhost/ci/index.php/login';
 			header('Location: '.$openid->authUrl());
@@ -98,27 +104,16 @@ class User extends CI_Controller {
 	}
 	
 	public function login() { // small fix
-		
 		require_once 'kpi_sources/openid.php';
 		$openid = new LightOpenID("localhost");
 		 
 		if ($openid->mode) {
 			if ($openid->validate()) {
 				$email = $openid->getAttributes()['contact/email'];
-				$user = $this->user_db->gen_query('account_id, user_id, iscu_id, status_id','users','email="'.$email.'"');
+				$user = $this->user_db->gen_query('user_id, iscu_id, status_id','users','email="'.$email.'"');
 				if ($user->num_rows > 0) {
-					if ($user->result()[0]->status_id == 1)
-					{
-					$usertype = $this->user_db->user_type($user->result()[0]->account_id);
-					$Cuser = strtolower($usertype['account_name']);
-						$newdata = array(
-									'iscu_field' => $user->result()[0]->iscu_id,
-									'user_id' => $user->result()[0]->user_id,
-									'user_type' => $Cuser,
-									'email' => $email);
-						$this->session->set_userdata($newdata);
-						$this->output->set_header("location: redirect");
-					} else if ($user->result()[0]->status_id == 2) $this->output->set_header('location: redirect_fail');
+					if ($user->result()[0]->status_id == 1) $this->output->set_header('location: redirect');
+					else if ($user->result()[0]->status_id == 2) $this->output->set_header('location: redirect_fail');
 					else $this->output->set_header('location: redirect_fail');
 				}
 				else $this->output->set_header('location: redirect_email');	// echo "No email in the db.";
@@ -138,25 +133,15 @@ class User extends CI_Controller {
 		
 		//$data['title'] = ucfirst($page);
 		
-		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect')) && $page!='error') {
-			
-			if(!isset($this->session->userdata['email']))
-			{
-				$this->output->set_header('location: index');
-			}
-			
-			
-			$user = strtok($page, "_");
-			
-			$this->usertype_checker($user);
-			
-			$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
+		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect'))) {
+			$iscu_id = 1001; // hard coded pa
 				
-			$data['kpi'] = $this->user_db->sidebar(true);
-			$data['subkpi'] = $this->user_db->subsidebar(true);
+			$data['kpi'] = $this->user_db->sidebar();
+			$data['subkpi'] = $this->user_db->subsidebar();
 			$data['update'] = $this->user_db->updates($iscu_id);
 			$data['checker'] = "empty";
 			
+			$user = strtok($page, "_");
 			
 			if ( $page == 'superuser_activate' ) $this->activate();
 			else if ($page != 'superuser_accounts' && $page != 'superuser_addaccount') {
@@ -169,27 +154,14 @@ class User extends CI_Controller {
 			
 			}
 			else $this->view_accounts($page);
-		} else if($page=='error')
-		{
-			$this->load->view('kpi/'.$page);
-		} else {
-		
-			if(isset($this->session->userdata['email']))
-			{
-					$this->output->set_header("location: ".$this->session->userdata['user_type']."");
-			}
-			
+		}
+		else {
 			$this->load->view('kpi/'.$page);
 		}
 	}
 	
 	public function viewmetric() // IMPORTANT TO FIX !!! error check din
 	{
-	
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
-		}
 		/* $post_values = $this->input->post(NULL, true);
 		$this->load->library('form_validation');
 		if (!empty($post_values) && !in_array("", $post_values)) {
@@ -197,21 +169,21 @@ class User extends CI_Controller {
 		}
 		$save = false; */
 		$q = $this->parse_q($_GET['q']);
-		$iscu_id = $this->session->userdata('iscu_field'); // hard coded
+		$iscu_id = 1001; // hard coded
 		$identifier = "verified";
 		
 		$current_kpi = $q['current_kpi'];
 		$current_subkpi = $q['current_subkpi'];
 		
-		$data['kpi'] = $this->user_db->sidebar(true);
-		$data['subkpi'] = $this->user_db->subsidebar(true);
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['period'] = $this->user_db->period_value();
 		$data['metric_values'] = $this->user_db->allmetric($iscu_id, $identifier);
 		
 		$data['current_kpi'] = $current_kpi;
 		$data['current_subkpi'] = $current_subkpi;
 		
-		$data['metric'] = $this->user_db->query_metric($current_subkpi, true);
+		$data['metric'] = $this->user_db->query_metric($current_subkpi);
 		$data['checker'] = "notempty";
 		
 		/* for ($i = 1; $i < count($data['metric'])+1; $i++) {
@@ -221,6 +193,33 @@ class User extends CI_Controller {
 		if ($this->form_validation->run() == false && $save) {
 			header('location: rate?q='.$_GET['q']);
 		} */
+		
+		// load model
+		$this->load->model('addratemodel');
+		$user_id = 1; //hard coded
+		$results_id = 1; // hard coded
+		
+		// check kung naglagay ng value, tapos update db
+		$counter = 0;
+		while($counter<count($_POST)){
+			$key = substr(key($_POST),6);
+			$val = current($_POST);
+			$this->addratemodel->adduserrate($key, $val, $user_id, $results_id);
+			next($_POST);
+			$counter++;
+		}
+		
+		// get value kung meron na
+		$data['metric_value'] = array();
+		foreach($data['metric'] as $metric){
+			$value = $this->addratemodel->getrating($metric['field_id'], $user_id, $results_id);
+			if(count($value)==0)
+				$value = "";
+			else
+				$value = $value['value'];
+			array_push($data['metric_value'], $value);
+		}
+		
 		$next = false;
 		
 		for ($i = 0; $i < count($data['kpi']); $i++) {
@@ -248,41 +247,59 @@ class User extends CI_Controller {
 
 	}
 	
-	public function submit() { // IMPORTANT TO FIX !!!
+	public function user_rated(){
+		// load model
+		$this->load->model('addratemodel');
+		$user_id = 1; //hard coded
+		$results_id = 1; // hard coded
 		
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
+		// check kung naglagay ng value, tapos update db
+		$counter = 0;
+		while($counter<count($_POST)){
+			$key = substr(key($_POST),6);
+			$val = current($_POST);
+			$this->addratemodel->adduserrate($key, $val, $user_id, $results_id);
+			next($_POST);
+			$counter++;
 		}
+		$iscu_id = 1001; // hard coded pa
+				
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['update'] = $this->user_db->updates($iscu_id);
+		$data['checker'] = "empty";
+		$user = "user";
 		
-		$this->load->helper('url');
-
-		$q = $_GET['q'];
-
-
+		$data['fieldvalues'] = $this->addratemodel->getallratings($user_id, $results_id);
+		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
-		//$this->load->view('kpi/navbar_'.$user);
+		$this->load->view('kpi/navbar_'.$user);
+		$this->load->view('kpi/user_rated',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function submit() { // IMPORTANT TO FIX !!!
+		$this->load->helper('url');
+
+		// update db
 		$this->load->model('user_db');
 		$this->user_db->submitRates();
-		//$this->load->view('kpi/user_rate');
-		//$this->load->view('kpi/'.$page,$data);
-
+		
+		// redirect to rate page
+		redirect('user_rate');
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
 		$this->load->view('kpi/footer');
 	}
 	
 	public function viewuser() // auditor
 	{
-		
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
-		}
-			
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
-		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
+		$iscu_id = 1001; // hard coded pa
 		
 		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
 		$data['checker'] = "empty"; // hard coded pa
@@ -296,14 +313,9 @@ class User extends CI_Controller {
 	
 	public function viewaccountid() // audior list ng mga unverified rate
 	{
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
-		}
-		
 		$q = $_GET['q'];
-		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
-		$identifier = "submitted";
+		$iscu_id = 1001; // hard coded pa
+		$identifier = 2;
 		
 		$user_id = strtok($q, "_");
 		strtok("_");
@@ -312,13 +324,14 @@ class User extends CI_Controller {
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
-		$data['kpi'] = $this->user_db->sidebar(true);
-		$data['subkpi'] = $this->user_db->subsidebar(true);
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
 		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
 		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
 		$data['user_id'] = $user_id;
 		$data['checker'] = "notempty"; // hard coded pa
+		$data['subchecker'] = "uneditable";
 		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
@@ -328,12 +341,6 @@ class User extends CI_Controller {
 	}
 	
 	public function view_accounts($page) { // view accounts for super user
-		
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
-		}
-		
 		$data['accounts'] = $this->user_db->get_accounts();
 		$data['iscu'] = $this->user_db->gen_query('iscu', 'iscu');
 		$data['account_name'] = $this->user_db->gen_query('account_name','accounts','');
@@ -346,8 +353,6 @@ class User extends CI_Controller {
 	}
 	
 	public function delete_account() { // dapat ba magnotify sa na-delete?
-		
-		
 		$q = $_GET['q'];
 		
 		$this->user_db->delete($q);
@@ -358,7 +363,6 @@ class User extends CI_Controller {
 	}
 	
 	public function add_account() { // fix needed
-	
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
 		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
@@ -404,67 +408,36 @@ class User extends CI_Controller {
 		}
 	}
 	
-	public function addSubKPI() { // (done)
+	public function addSubKPI() { // (retain)
 		$this->load->library('form_validation');
 		$this->form_validation->set_message('is_unique', 'This %s already exists');
 		$this->form_validation->set_rules('subkpi_name', 'SubKPI Name', 'trim|required|min_length[3]|is_unique[kpi.kpi_name]');
 		
 		if ($this->form_validation->run() == false) {
-			//$redirect = $this->input->post('redirect');
-			//$data['id']=$this->input->post('id');
 			$data['errors'] = validation_errors('<div class="alert alert-red">', '</div>');
 			$data['id'] = $this->input->post('id');
 			$this->session->set_flashdata('errors', $data);
-			//$this->load->view('kpi/superuser_addsubkpi', $data);
-			//redirect($redirect);
 			header('location: superuser_addsubkpi?id='.$data['id']);
 		}
 		else {
 			$this->user_db->addSubKPI();
-
 			$result = $this->user_db->getSubKpiId($this->input->post("subkpi_name"));
-			$subkpi_id = $result['kpi_id'];
-			//print"<pre>";print_r($result);print"</pre>";
-			$location = 'location:'.site_url('superuser_addmetric').'?id='.$subkpi_id;
-			header($location);
-		}
-	}
-	
-	function addMetric() { // (done)
-		$this->load->library('form_validation');
-		$this->form_validation->set_message('required', 'All metric fields are required.');
-		$this->form_validation->set_message('min_length', 'All metric names should at least be 3 characters long.');
-		$this->form_validation->set_message('is_unique', 'One of the metric names already exists.');
-		
-		for ($i = 0; $i < count($this->input->post(NULL, true))-1; $i++) {
-			$this->form_validation->set_rules('metric_name'.$i, 'Metric', 'trim|required|min_length[3]|is_unique[fields.field_name]');
-		}
-		
-		if ( $this->form_validation->run() == false ) {
-			$data['errors'] = validation_errors('<div class="alert alert-red">', '</div>');
-			$data['id'] = $this->input->post('id');
-			$this->session->set_flashdata('errors', $data);
-			header('location: superuser_addmetric?id='.$this->input->post('id'));
-		}
-		else {
-			$result = $this->user_db->addMetric();
 			
-			$kpi_id = $result['parent_kpi'];
-			//print"<pre>";print_r($result);print"</pre>";
-			$location = 'location:'.site_url('superuser_addsubkpi').'?id='.$kpi_id;
+			$subkpi = str_replace(" ", "_", $result['kpi_name']);
+			$result = $this->user_db->gen_query('kpi_name','kpi','kpi_id='.$result['parent_kpi'])->result_array()[0];
+			
+			$location = 'location: edit?q='.str_replace(" ", "_", $result['kpi_name']).'/'.$subkpi;
 			header($location);
 		}
 	}
 	
-	function addMetric1() { // (done)
+	function addMetric1() { // (retain)
 		$this->load->library('form_validation');
 		$this->form_validation->set_message('required', 'All metric fields are required.');
 		$this->form_validation->set_message('min_length', 'All metric names should at least be 3 characters long.');
 		$this->form_validation->set_message('is_unique', 'One of the metric names already exists.');
 		
-		for ($i = 0; $i < count($this->input->post(NULL, true))-1; $i++) {
-			$this->form_validation->set_rules('metric_name'.$i, 'Metric', 'trim|required|min_length[3]|is_unique[fields.field_name]');
-		}
+		$this->form_validation->set_rules('metric_name', 'Metric', 'trim|required|min_length[3]|is_unique[fields.field_name]');
 		
 		if ( $this->form_validation->run() == false ) {
 			$data['errors'] = validation_errors('<div class="alert alert-red">', '</div>');
@@ -474,17 +447,16 @@ class User extends CI_Controller {
 		}
 		else {
 			$result = $this->user_db->addMetric();
+			$result = $this->user_db->getMetricID($this->input->post('metric_name'))['field_id'];
 			
-			$kpi_id = $result['parent_kpi'];
-			//print"<pre>";print_r($result);print"</pre>";
-			$location = 'location:'.site_url('superuser_KPIs').'';
+			$location = 'location:'.site_url($this->input->post('button')).( $this->input->post('button')=='superuser_addbreakdown' ? '?id='.$result : '' );
+			
 			header($location);
 		}
 	}
 	
 	public function deactivate_value()
 	{
-			
 		$q = $_GET['q'];
 		$level = strtok($q, "/");
 		$id = strtok("/");
@@ -505,33 +477,13 @@ class User extends CI_Controller {
 		{
 			$this->user_db->deactivate_4($id);
 		}
+		redirect('superuser_edit');
 	}
-	
-	// public function viewedit() 
-	// {
-		// $q = $this->parse_q($_GET['q']);
-		
-		// $data['kpi'] = $this->user_db->sidebar();
-		// $data['subkpi'] = $this->user_db->subsidebar();
-		// $data['metric'] = $this->user_db->query_metric($q['current_subkpi']);
-		// $data['checker'] = "notempty"; // hard coded pa
-		
-		// $this->load->view('kpi/header');
-		// $this->load->view('kpi/banner');
-		// $this->load->view('kpi/navbar_superuser');
-		// $this->load->view('kpi/superuser_edit',$data);
-		// $this->load->view('kpi/footer');
-	// }
 	
 	public function edit_values()
 	{
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
-		}
-		
 		$q = $this->parse_q($_GET['q']);
-		$iscu_id = $this->session->userdata('iscu_field');
+		$iscu_id = 1001;
 		
 		$current_kpi = $q['current_kpi'];
 		$current_subkpi = $q['current_subkpi'];
@@ -557,6 +509,28 @@ class User extends CI_Controller {
 		$this->load->view('kpi/superuser_edit',$data);
 		$this->load->view('kpi/footer');
 
+	}
+	
+	public function check_breakdownchange($str) {
+		if (count(array_keys($this->input->post('breakdown'), $str)) > 1) {
+			$this->form_validation->set_message('check_breakdownchange', 'A breakdown name was used multiple times. Breakdown names must be unique.');
+			return false;
+		}
+		else {
+			$this->form_validation->set_message('check_breakdownchange', 'One of the breakdown names already exists. Please enter a unique breakdown name.');
+			
+			foreach ($this->input->post('breakdown') as $breakdown_item):
+				$result = $this->user_db->gen_query('breakdown_id, breakdown_name', 'breakdown', 'breakdown_name="'.$breakdown_item.'"');
+				
+				if ( $result->num_rows > 1 ) return false;
+				else if ( $result->num_rows == 1 ) {
+					$key = array_keys($this->input->post('breakdown_id'), $result->result()[0]->breakdown_id);
+					
+					if ( empty($key) || $result->result()[0]->breakdown_name != $this->input->post('breakdown')[$key[0]] ) return false;
+				}
+			endforeach;
+		}
+		return true;
 	}
 	
 	public function check_fieldchange($str) {
@@ -589,8 +563,13 @@ class User extends CI_Controller {
 		if ( $this->user_db->gen_query('kpi_name', 'kpi', 'kpi_id='.$this->input->post('subkpi_id'))->result()[0]->kpi_name == $str ) {
 			return true;
 		}
-		else if ( $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$str.'"')->result()[0]->kpi_id == $this->input->post('subkpi_id') ) {
-			return true;
+		else {
+			$result = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$str.'"');
+			if ( $result->num_rows > 0 ) {
+				if ( $result->result()[0]->kpi_id == $this->input->post('subkpi_id') )
+					return true;
+			}
+			else return true;
 		}
 		$this->form_validation->set_message('check_subkpichange', 'A SubKPI with this name already exists. SubKPI Names must be unique.');
 		return false;
@@ -598,32 +577,66 @@ class User extends CI_Controller {
 	
 	public function check_kpichange($str) {
 		if ( $this->user_db->gen_query('kpi_name', 'kpi', 'kpi_id='.$this->input->post('kpi_id'))->result()[0]->kpi_name == $str ) {
-			return true;
+			return true; // no change to the kpi name
 		}
-		else if ( $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$str.'"')->result()[0]->kpi_id == $this->input->post('kpi_id') ) {
-			return true;
+		else {
+			$result = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$str.'"');
+			if ( $result->num_rows > 0) {
+				if ( $result->result()[0]->kpi_id == $this->input->post('kpi_id') )
+					return true; // check kung may kapareho, check kung same id => if true, true then same entry
+			}
+			else return true; // walang kapareho ng kpi_name
 		}
 		$this->form_validation->set_message('check_kpichange', 'A KPI with this name already exists. KPI Names must be unique.');
 		return false;
 	}
 	
-	public function changevalue() { // error checking for editing kpi
-		if(!isset($_SESSION['email']))			
-		{
-			$this->output->set_header('location: index');
+	public function unique_metric($str) {
+		if ( count(array_keys($this->input->post('metric_name'), $str)) > 1 ) {
+			$this->form_validation->set_message('unique_metric', 'A metric name was used multiple times. Metric names must be unique.');
+			return false;
 		}
+		return true;
+	}
 	
+	public function unique_breakdown($str) {
+		$holder = array();
+		foreach ( $this->input->post('metric_id') as $metric_id ):
+			if ($this->input->post('breakdown'.$metric_id.'_name'))
+				$holder = array_merge($holder, $this->input->post('breakdown'.$metric_id.'_name'));
+		endforeach;
+		
+		$holder = array_keys($holder, $str);
+		
+		if ( count($holder) > 1 ) {
+			$this->form_validation->set_message('unique_breakdown', 'A breakdown name was used multiple times. Breakdown names must be unique.');
+			return false;
+		}
+		return true;
+	}
+	
+	public function changevalue() { // error checking for editing kpi
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('kpi', 'KPI Name', 'trim|required|min_length[3]|callback_check_kpichange');
 		$this->form_validation->set_rules('subkpi', 'SubKPI Name', 'trim|required|min_length[3]|callback_check_subkpichange');
-		$this->form_validation->set_rules('metric[]', 'Metric Name', 'trim|required|min_length[3]|callback_check_fieldchange');
-		$asdf = $this->input->post(NULL, true);
-		//echo var_dump($asdf);
+		
+		if ($this->input->post('metric')) $this->form_validation->set_rules('metric[]', 'Metric Name', 'trim|required|min_length[3]|callback_check_fieldchange');
+		
+		if ($this->input->post('metric_name')) $this->form_validation->set_rules('metric_name[]', 'Metric Name' ,'trim|required|min_length[3]|callback_unique_metric|is_unique[fields.field_name]');
+		
+		if ($this->input->post('breakdown')) $this->form_validation->set_rules('breakdown[]', 'Breakdown Name', 'trim|required|min_length[3]|is_unique[fields.field_name]|callback_check_breakdownchange');
+		
+		if ($this->input->post('metric_id')) {
+			foreach ($this->input->post('metric_id') as $metric_id):
+				$holder = $this->input->post('breakdown'.$metric_id.'_name');
+				
+				if (!empty($holder)) $this->form_validation->set_rules('breakdown'.$metric_id.'_name[]', 'Breakdown Name', 'trim|required|min_length[3]|callback_unique_breakdown|is_unique[breakdown.breakdown_name]|is_unique[fields.field_name]');
+			endforeach;
+		}
 		
 		if ( $this->form_validation->run() == false ) {
-			// $asdf = $this->input->post(NULL, true);
-			// echo var_dump($asdf);
-			echo validation_errors();
+			$this->session->set_flashdata('errors', validation_errors('<div class="alert alert-red">', '</div>'));
+			header("location: editvalue?q=".str_replace(" ", "_", $this->input->post('kpi'))."/".str_replace(" ", "_", $this->input->post('subkpi')));
 		}
 		else {
 			$location =  $this->user_db->change_value();
@@ -633,18 +646,8 @@ class User extends CI_Controller {
 	
 	public function edit_a_value()
 	{
-		if(!isset($this->session->userdata['email']))
-		{
-			$this->output->set_header('location: index');
-		}
-		
-		if(!isset($_SESSION['email']))			
-		{
-			$this->output->set_header('location: index');
-		}
-			
 		$q = $this->parse_q($_GET['q']);
-		$iscu_id = $this->session->userdata('iscu_field');
+		$iscu_id = 1001;
 
 		$current_kpi = $q['current_kpi'];
 		$current_subkpi = $q['current_subkpi'];
@@ -680,6 +683,13 @@ class User extends CI_Controller {
 	function activate() { // activate KPI for superuser
 		list($data['inactive'], $data['kpi'], $data['subkpi']) = $this->user_db->get_inactive();
 		
+		list($metric_breakdown, $data['submetric']) = $this->user_db->get_inactive_submetric();
+		
+		foreach ($metric_breakdown as $breakdown_item):
+			if (!in_array($breakdown_item, $data['inactive']))
+				$data['inactive'] = array_merge($data['inactive'], array($breakdown_item));
+		endforeach;
+		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
 		$this->load->view('kpi/navbar_superuser');
@@ -687,26 +697,66 @@ class User extends CI_Controller {
 		$this->load->view('kpi/footer');
 	}
 	
-	function shit() {
+	function assignISCU() {
+		$result = $this->user_db->assignISCU();
 		
-		echo "<pre>";
-		print_r($this->input->post(NULL, true));
-		echo "</pre>";
+		$location = 'location'.site_url('superuser_assign').'';
+		header($location);
 	}
 	
-	public function logout()
-	{
-		
-		$this->session->sess_destroy();
-		$this->output->set_header('location: index');
+	function debug($array) {
+		print_r('<pre>'); print_r($array); print_r('</pre>');
 	}
 	
-	public function usertype_checker($site)
+	public function select()
 	{
-		if($this->session->userdata('user_type')!=$site)
+		$button_value =  $_POST['buttoncheck_name'];
+		
+		if($button_value==1)
 		{
-			$this->output->set_header('location: error');
+			$this->edit_viewaccountid($_POST['user_id']);
+		} else if($button_value==2)
+		{
+			$user_id = 2;
+			$this->user_db->rejectselected_query($user_id);
+		} else if($button_value==3)
+		{
+			$user_id = 2;
+			$this->user_db->approvevalue_query($user_id);
+			header('Location: auditor_verify');
+		} else if($button_value==4)
+		{
+			$this->user_db->editvaluesofaccountid($_POST['user_id']);
+			$this->user_db->approvevalue_query($_POST['user_id']);
+			header('Location: auditor_verify');
 		}
+		
+	}
+	
+	public function edit_viewaccountid($user_id) // edit list of values by auditor
+	{
+		$iscu_id = 1001; // hard coded pa
+		$identifier = 2;
+
+		
+		$page='auditor_verify';
+		$user = "auditor";
+		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
+		$data['user_id'] = $user_id;
+		$data['editvalues'] = $this->user_db->editselected_query();
+		$data['checker'] = "notempty"; // hard coded pa
+		$data['subchecker'] = "editable";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_'.$user);
+		$this->load->view('kpi/'.$page,$data);
+		$this->load->view('kpi/footer');
 	}
 }
 
