@@ -1,0 +1,15 @@
+?php
+	
+	Class Removermodel extends CI_Model {
+
+		public function __construct(){
+			parent::__construct();
+			$this->load->database();
+		}
+
+		public function deleteaccount($id){
+			$this->load->database();
+			$this->db->query('DELETE FROM users WHERE user_id='.$id);
+		}
+	}
+?>
