@@ -714,31 +714,42 @@ class User extends CI_Controller {
 		
 		if($button_value==1)
 		{
-			$this->edit_viewaccountid($_POST['user_id']);
+			if(isset($_POST['valueselected']))
+			{
+			$this->edit_viewaccountid();
+			} else
+			{
+				header('Location: auditor_verify');
+			}
 		} else if($button_value==2)
 		{
+			
+			if(isset($_POST['valueselected']))
+			{
 			$user_id = 2;
-			$this->user_db->rejectselected_query($user_id);
+			$this->user_db->rejectselected_query(1001);
+			header('Location: auditor_verify');
+			} else {
+				header('Location: auditor_verify');
+			}
 		} else if($button_value==3)
 		{
 			$user_id = 2;
-			$this->user_db->approvevalue_query($user_id);
-			header('Location: auditor_verify');
+			$this->user_db->approvevalue_query(1001);
+			$this->displayapproved();
 		} else if($button_value==4)
 		{
-			$this->user_db->editvaluesofaccountid($_POST['user_id']);
-			$this->user_db->approvevalue_query($_POST['user_id']);
+			$this->user_db->editvaluesofaccountid(1001);
 			header('Location: auditor_verify');
 		}
 		
 	}
 	
-	public function edit_viewaccountid($user_id) // edit list of values by auditor
+	public function edit_viewaccountid() // edit list of values by auditor
 	{
 		$iscu_id = 1001; // hard coded pa
 		$identifier = 2;
 
-		
 		$page='auditor_verify';
 		$user = "auditor";
 		
@@ -746,16 +757,57 @@ class User extends CI_Controller {
 		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
 		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
-		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
-		$data['user_id'] = $user_id;
+		$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
 		$data['editvalues'] = $this->user_db->editselected_query();
 		$data['checker'] = "notempty"; // hard coded pa
 		$data['subchecker'] = "editable";
 		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
-		$this->load->view('kpi/navbar_'.$user);
-		$this->load->view('kpi/'.$page,$data);
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function auditor_verify_page()
+	{
+		$iscu_id = 1001; // hard coded pa
+		$identifier = 2;
+	
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
+		$data['iscu_id'] = $iscu_id;
+		$data['checker'] = "notempty"; // hard coded pa
+		$data['subchecker'] = "uneditable";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function displayapproved()
+	{
+		$iscu_id = 1001; // hard coded pa
+		$identifier = 3;
+		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
+		$data['iscu_id'] = $iscu_id;
+		$data['checker'] = "notempty"; // hard coded pa
+		$data['subchecker'] = "approved";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
 		$this->load->view('kpi/footer');
 	}
 }

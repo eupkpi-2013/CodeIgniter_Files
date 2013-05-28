@@ -74,10 +74,19 @@
 			return $query->result_array();
 		} */
 		
-		public function verify_value($user_id) //ren's file
-		{
-			$query = $this->db->get_where('field_values', array('user_id'=> $user_id));
-			return $query->result_array();
+		public function verify_value($iscu_id) //ren's file
+		{	
+			$query = $this->db->get_where('users', array('iscu_id'=> $iscu_id));
+			$query2 = array();
+				
+			foreach($query->result_array() as $query_item):
+				$tempquery = $this->db->get_where('field_values', array('user_id'=>$query_item['user_id']));
+				foreach($tempquery->result_array() as $tempquery_item):
+					array_push($query2, $tempquery_item);
+				endforeach;
+			endforeach;
+			
+			return $query2;
 		}
 		
 		public function allmetric1()
@@ -90,7 +99,7 @@
 		{
 			$this->db->query("drop view IF EXISTS all_results");
 			$this->db->query("create view all_results as SELECT value_status_id,kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
-			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id='$identifier'");	
+			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id=$identifier AND results_id=1"); //hard-coded pa yung 1	
 			$query = $this->db->get('all_results');
 			$this->db->query("drop view all_results");
 			return $query->result_array();
@@ -400,24 +409,41 @@
 			return $query;
 		}
 		
-		public function rejectselected_query($user_id)
+		public function rejectselected_query($iscu_id)
 		{
+			$query = $this->db->get_where('users', array('iscu_id'=>$iscu_id));
+			
 			foreach($_POST['valueselected'] as $element):
 				$id =  strtok($element, "/");
 				$value = strtok("/");
-				$this->db->query("UPDATE field_values SET value_status_id=4 WHERE user_id=$user_id AND field_id=$id");
+				
+				foreach($query->result_array() as $query_item):
+					$userid = $query_item['user_id'];
+					$this->db->query("UPDATE field_values SET value_status_id=4 WHERE user_id=$userid AND field_id=$id");
+				endforeach;
 			endforeach;
 		}
 		
-		public function approvevalue_query($user_id)
+		public function approvevalue_query($iscu_id)
 		{
-			$this->db->query("UPDATE field_values SET value_status_id=3 WHERE user_id=$user_id");
+			$query = $this->db->get_where('users', array('iscu_id'=>$iscu_id));
+			
+			foreach($query->result_array() as $query_item):
+				$userid = $query_item['user_id'];
+				$this->db->query("UPDATE field_values SET value_status_id=3 WHERE user_id=$userid");
+			endforeach;
+
 		}
 		
-		public function editvaluesofaccountid($user_id)
+		public function editvaluesofaccountid($iscu_id)
 		{
+			$query = $this->db->get_where('users', array('iscu_id'=>$iscu_id));
+		
 			foreach(array_combine($_POST['edited'],$_POST['edited_id']) as $value => $id):
-				$this->db->query("UPDATE field_values SET value=$value WHERE user_id=$user_id AND field_id=$id");
+				foreach($query->result_array() as $query_item):
+					$userid = $query_item['user_id'];
+					$this->db->query("UPDATE field_values SET value=$value WHERE user_id=$userid AND field_id=$id");
+				endforeach;
 			endforeach;
 		}
 	}
