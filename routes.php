@@ -37,19 +37,66 @@
 | in the URL cannot be matched to a valid route.
 |
 */
-$route['user_rate.html'] = "";
+$route['publicreports'] = "kpi_generate_controller/publicreports";
+$route['report/(:any)/changevisibleto'] = "kpi_generate_controller/changevisibleto/$1";
+$route['report/(:any)'] = "kpi_generate_controller/report/$1";
+$route['reports'] = "kpi_generate_controller/reports";
+$route['publish/(:any)'] = "kpi_generate_controller/publish/$1";
+$route['generated/txt/(:any)'] = "kpi_generate_controller/previewtxt/$1";
+$route['generated/excel/(:any)'] = "kpi_generate_controller/previewexcel/$1";
+$route['generated/pdf/(:any)'] = "kpi_generate_controller/previewpdf/$1";
+$route['generated/printablepage/(:any)'] = "kpi_generate_controller/printablepage/$1";
+$route['generated'] = "kpi_generate_controller/generated";
+$route['generate/(:any)'] = "kpi_generate_controller/generate/$1";
+$route['generate'] = "kpi_generate_controller/generate/null";
+
+
+//$route['user_rate.html'] = "";
+$route['shit'] = "user/shit";
 $route['auditor'] = "user/view/auditor_home";
+$route['index'] = "user/index";
+$route['auth'] = "user/auth";
+$route['login'] = "user/login";
+$route['signup'] = "user/signup";
+$route['delete_account'] = "user/delete_account";
+$route['add_account'] = "user/add_account";
+$route['verify'] = "user/viewaccountid";
+$route['auditor_verify'] = "user/viewuser";
+
+
+// for user views
 $route['user'] = "user/view/user_home";
 $route['rate'] = "user/viewmetric";
-$route['verify'] = "user/viewaccountid";
+$route['submit'] = "user/submit";
+$route['user_rated'] = "user/user_rated";
+
+
+// for superuser results views
+$route['activate_results'] = "user/activate_results";
+
+
+// for superuser add kpi views
+$route['addKPI'] = 'user/addKPI';
+$route['addSubKPI'] = 'user/addSubKPI';
+$route['addMetric1'] = 'user/addMetric1';
+//$route['addBreakdown'] = 'user/addBreakdown';
+
+
+// for superuser edit kpi views
 $route['edit'] = "user/edit_values";
 $route['editvalue'] = "user/edit_a_value";
 $route['changevalue'] = "user/changevalue";
-$route['auditor_verify'] = "user/viewuser";
+$route['deactivate'] = "user/deactivate_value";
+
+
+// for superuser activate kpi
+$route['activate_kpi'] = "user/activate_kpi";
+
+
+// defaults (?)
 $route['default_controller'] = "welcome";
 $route['404_override'] = '';
 $route['(:any)'] = 'user/view/$1';
-
 
 
 /* End of file routes.php */
