@@ -8,12 +8,12 @@ class User extends CI_Controller {
 		$this->load->model('user_db');
 	}
 	
-	public function index() { // IMPORTANT TO FIX !!!
+	/* public function index() { // IMPORTANT TO FIX !!!
 		if($this->session->userdata('user_name')!='') $this->view('user');
 		else {
 			$this->view('index');
 		}
-	}
+	} */
 	
 	public function signup() { // done (?)
 		$this->load->library('form_validation');
@@ -22,7 +22,7 @@ class User extends CI_Controller {
 		$this->form_validation->set_rules('gmail', 'Gmail', 'trim|required|valid_email|callback_check_entry');
 		$this->form_validation->set_rules('con_gmail', 'Gmail Confirmation', 'trim|required|matches[gmail]');
 		
-		if ($this->form_validation->run() == FALSE) $this->index();
+		if ($this->form_validation->run() == FALSE) $this->view('index');
 		else {
 			$this->user_db->add_user();
 			$this->checkmail();
@@ -86,7 +86,6 @@ class User extends CI_Controller {
 			  'namePerson/last',
 			  'contact/email',
 			);
-			echo $openid->required['contact/email'];
 			//header('Location: ' . $openid->authUrl());
 			$openid->returnUrl = 'http://localhost/ci/index.php/login';
 			header('Location: '.$openid->authUrl());
@@ -106,7 +105,19 @@ class User extends CI_Controller {
 				$email = $openid->getAttributes()['contact/email'];
 				$user = $this->user_db->gen_query('account_id, user_id, iscu_id, status_id','users','email="'.$email.'"');
 				if ($user->num_rows > 0) {
-					if ($user->result()[0]->status_id == 1) $this->output->set_header('location: redirect');
+					if ($user->result()[0]->status_id == 1)
+					{
+						$usertype = $this->user_db->user_type($user->result()[0]->account_id);
+						$Cuser = strtolower($usertype['account_name']);
+						$newdata = array(
+							'iscu_field' => $user->result()[0]->iscu_id,
+							'user_id' => $user->result()[0]->user_id,
+							'user_type' => $Cuser,
+							'email' => $email
+							);
+						$this->session->set_userdata($newdata);
+						$this->output->set_header('location: redirect');
+					}
 					else if ($user->result()[0]->status_id == 2) $this->output->set_header('location: redirect_fail');
 					else $this->output->set_header('location: redirect_fail');
 				}
@@ -123,10 +134,16 @@ class User extends CI_Controller {
 		
 		//$data['title'] = ucfirst($page);
 		
-		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect'))) {
-			$iscu_id = 1001; // hard coded pa
-			$user_id = 1;
+		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect')) && $page != 'error') {
+			if (!isset($this->session->userdata['email']))
+			{
+				$this->output->set_header('location: index');
+			}
+			
+			$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
 			$user = strtok($page, "_");	
+			$this->usertype_checker($user);
+			
 			$data['kpi'] = $this->user_db->sidebar(($user=='user' ? false : true));
 			$data['subkpi'] = $this->user_db->subsidebar(($user=='user' ? false : true));
 			$data['update'] = $this->user_db->updates($iscu_id);
@@ -148,96 +165,114 @@ class User extends CI_Controller {
 			}
 			else $this->view_accounts($page);
 		}
+		else if ($page == 'error') {
+			$this->load->view('kpi/'.$page);
+		}
 		else {
+			if (isset($this->session->userdata['email'])) {
+				$this->output->set_header("location: ".$this->session->userdata['user_type']);
+			}
 			$this->load->view('kpi/'.$page);
 		}
 	}
 	
 	public function viewmetric() // user_rate
 	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='user') $this->output->set_header('location: index');
 		if (empty($_GET['q'])) {
 			$this->session->set_flashdata('errors', '<div class="alert alert-red">Rate failed: No selected KPI/SubKPI</div>');
 			header('location: user_rate');
 		}
 		else {
 			$q = $this->parse_q($_GET['q']);
-			$iscu_id = 1001; // hard coded
+			$iscu_id = $this->session->userdata('iscu_field'); // hard coded
 			$identifier = "verified";
 			
 			$current_kpi = $q['current_kpi'];
 			$current_subkpi = $q['current_subkpi'];
 			
-			$data['kpi'] = $this->user_db->sidebar();
-			$data['subkpi'] = $this->user_db->subsidebar();
-			$data['period'] = $this->user_db->period_value();
-			$data['metric_values'] = $this->user_db->allmetric($iscu_id, $identifier);
+			$query1 = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$current_kpi.'" AND active=1')->row_array();
+			$query2 = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$current_subkpi.'" AND active=1')->row_array();
 			
-			$data['current_kpi'] = $current_kpi;
-			$data['current_subkpi'] = $current_subkpi;
-			
-			$data['metric'] = $this->user_db->query_metric($current_subkpi);
-			$data['checker'] = "notempty";
-			
-			$data['active'] = $this->user_db->get_active_result();
-			
-			// load model
-			$this->load->model('addratemodel');
-			$user_id = 1; //hard coded
-			
-			// check kung naglagay ng value, tapos update db
-			if (!empty($data['active'])) {
-				$results_id = $data['active'][0]['results_id'];
-				$counter = 0;
-				while($counter<count($_POST)){
-					$key = substr(key($_POST),6);
-					$val = current($_POST);
-					$this->addratemodel->adduserrate($key, $val, $user_id, $results_id);
-					next($_POST);
-					$counter++;
-				}
-			
-				// get value kung meron na
-				$data['metric_value'] = array();
-				foreach($data['metric'] as $metric){
-					$value = $this->addratemodel->getrating($metric['field_id'], $user_id, $results_id);
-					if(count($value)==0)
-						$value = "";
-					else
-						$value = $value['value'];
-					array_push($data['metric_value'], $value);
-				}
+			if (empty($query1) || empty($query2)) {
+				$this->session->set_flashdata('errors', '<div class="alert alert-red">Edit Value failed: Selected KPI/SubKPI does not exist.</div>');
+				header('location: user_rate');
+			}
+			else {
+				$data['kpi'] = $this->user_db->sidebar();
+				$data['subkpi'] = $this->user_db->subsidebar();
+				$data['period'] = $this->user_db->period_value();
+				$data['metric_values'] = $this->user_db->allmetric($iscu_id, $identifier);
 				
-				$next = false;
+				$data['current_kpi'] = $current_kpi;
+				$data['current_subkpi'] = $current_subkpi;
 				
-				for ($i = 0; $i < count($data['kpi']); $i++) {
-					if ($current_kpi === $data['kpi'][$i]['kpi_name'] || $next) {
-						$childkpi = $this->user_db->gen_query('kpi_name','kpi','active="1" AND parent_kpi='.$data['kpi'][$i]['kpi_id']);
-						for ($j = 0; $j < $childkpi->num_rows; $j++) {
-							if ($next) {
-								$data['next'] = str_replace(" ", "_", $data['kpi'][$i]['kpi_name'])."/".str_replace(" ", "_", $childkpi->result_array()[$j]['kpi_name']);
-								$next = false;
-								break;
+				$data['metric'] = $this->user_db->query_metric($current_subkpi);
+				$data['checker'] = "notempty";
+				
+				$data['active'] = $this->user_db->get_active_result();
+				
+				// load model
+				$this->load->model('addratemodel');
+				$user_id = $this->session->userdata('user_id'); //hard coded
+				
+				// check kung naglagay ng value, tapos update db
+				if (!empty($data['active'])) {
+					$results_id = $data['active'][0]['results_id'];
+					$counter = 0;
+					while($counter<count($_POST)){
+						$key = substr(key($_POST),6);
+						$val = current($_POST);
+						$this->addratemodel->adduserrate($key, $val, $user_id, $results_id);
+						next($_POST);
+						$counter++;
+					}
+				
+					// get value kung meron na
+					$data['metric_value'] = array();
+					foreach($data['metric'] as $metric){
+						$value = $this->addratemodel->getrating($metric['field_id'], $user_id, $results_id);
+						if(count($value)==0)
+							$value = "";
+						else
+							$value = $value['value'];
+						array_push($data['metric_value'], $value);
+					}
+					
+					$next = false;
+					
+					for ($i = 0; $i < count($data['kpi']); $i++) {
+						if ($current_kpi === $data['kpi'][$i]['kpi_name'] || $next) {
+							$childkpi = $this->user_db->gen_query('kpi_name','kpi','active="1" AND parent_kpi='.$data['kpi'][$i]['kpi_id']);
+							for ($j = 0; $j < $childkpi->num_rows; $j++) {
+								if ($next) {
+									$data['next'] = str_replace(" ", "_", $data['kpi'][$i]['kpi_name'])."/".str_replace(" ", "_", $childkpi->result_array()[$j]['kpi_name']);
+									$next = false;
+									break;
+								}
+								if ($current_subkpi === $childkpi->result_array()[$j]['kpi_name'])
+									$next=true;
 							}
-							if ($current_subkpi === $childkpi->result_array()[$j]['kpi_name'])
-								$next=true;
 						}
 					}
 				}
+				
+				$this->load->view('kpi/header');
+				$this->load->view('kpi/banner');
+				$this->load->view('kpi/navbar_user');
+				$this->load->view('kpi/user_rate',$data);
+				$this->load->view('kpi/footer');
 			}
-			
-			$this->load->view('kpi/header');
-			$this->load->view('kpi/banner');
-			$this->load->view('kpi/navbar_user');
-			$this->load->view('kpi/user_rate',$data);
-			$this->load->view('kpi/footer');
 		}
 	}
 	
 	public function user_rated() { // user_rated
 		// load model
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='user') $this->output->set_header('location: index');
+		
 		$this->load->model('addratemodel');
-		$user_id = 1; //hard coded
-		$results_id = 1; // hard coded
+		$user_id = $this->session->userdata('user-id'); //hard coded
+		$results_id = $this->user_db->get_active_result(); // hard coded
 		
 		// check kung naglagay ng value, tapos update db
 		$counter = 0;
@@ -248,7 +283,7 @@ class User extends CI_Controller {
 			next($_POST);
 			$counter++;
 		}
-		$iscu_id = 1001; // hard coded pa
+		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
 		$identifier = 'not submitted';
 		
 		$data['kpi'] = $this->user_db->sidebar();
@@ -270,7 +305,10 @@ class User extends CI_Controller {
 	}
 	
 	public function submit() { // user_rated submit button
-		$user_id = 1; // get from session
+	
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='user') $this->output->set_header('location: index');
+		
+		$user_id = $this->session->userdata('user_id'); // get from session
 		$results_id = $this->user_db->get_active_result()[0]['results_id'];
 		
 		if (empty($results_id)) {
@@ -303,10 +341,12 @@ class User extends CI_Controller {
 	
 	public function viewuser() // auditor
 	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='auditor') $this->output->set_header('location: index');
+		
 		$page='auditor_verify';
 		$user = strtok($page, "_");
 		
-		$iscu_id = 1001; // hard coded pa
+		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
 		
 		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
 		$data['checker'] = "empty"; // hard coded pa
@@ -320,9 +360,11 @@ class User extends CI_Controller {
 	
 	public function viewaccountid() // audior list ng mga unverified rate
 	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='auditor') $this->output->set_header('location: index');
+		
 		$q = $_GET['q'];
-		$iscu_id = 1001; // hard coded pa
-		$identifier = "submitted";
+		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
+		$identifier = 2;
 		
 		$user_id = strtok($q, "_");
 		strtok("_");
@@ -337,7 +379,8 @@ class User extends CI_Controller {
 		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
 		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
 		$data['user_id'] = $user_id;
-		$data['checker'] = "notempty"; // hard coded pa
+		$data['checker'] = "notempty";
+		$data['subchecker'] = "uneditable";
 		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
@@ -346,7 +389,10 @@ class User extends CI_Controller {
 		$this->load->view('kpi/footer');
 	}
 	
-	public function view_accounts($page) { // view accounts for super user
+	// view accounts for super user
+	public function view_accounts($page) { 
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$data['accounts'] = $this->user_db->get_accounts();
 		$data['iscu'] = $this->user_db->gen_query('iscu', 'iscu');
 		$data['account_name'] = $this->user_db->gen_query('account_name','accounts','');
@@ -359,16 +405,18 @@ class User extends CI_Controller {
 	}
 	
 	public function delete_account() { // dapat ba magnotify sa na-delete?
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$q = $_GET['q'];
 		
 		$this->user_db->delete($q);
-		//$this->output->set_header("location: redirect");
-		$data['success'] = true;
-		
+		// EDIT!!!
 		$this->output->set_header('location: superuser_accounts');
 	}
 	
 	public function add_account() { // fix needed
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('fname', 'First Name', 'trim|required|min_length[3]|max_length[12]');
 		$this->form_validation->set_rules('lname', 'Last Name', 'trim|required|min_length[3]|max_length[12]');
@@ -388,6 +436,8 @@ class User extends CI_Controller {
 	}
 	
 	public function addKPI() { // (retain)
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$this->load->library('form_validation');
 		$this->form_validation->set_message('is_unique', 'This %s already exists');
 		$this->form_validation->set_rules('kpi_name', 'KPI Name', 'trim|required|min_length[3]|is_unique[kpi.kpi_name]');
@@ -414,6 +464,8 @@ class User extends CI_Controller {
 	
 	// superuser add subkpi to kpi
 	public function addSubKPI() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$this->load->library('form_validation');
 		$this->form_validation->set_message('is_unique', 'This %s already exists');
 		$this->form_validation->set_rules('subkpi_name', 'SubKPI Name', 'trim|required|min_length[3]|is_unique[kpi.kpi_name]');
@@ -438,6 +490,8 @@ class User extends CI_Controller {
 	
 	// superuser add metric to kpi (internal kpi)
 	function addMetric1() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$this->load->library('form_validation');
 		$this->form_validation->set_message('required', 'All metric fields are required.');
 		$this->form_validation->set_message('min_length', 'All metric names should at least be 3 characters long.');
@@ -464,6 +518,7 @@ class User extends CI_Controller {
 	// superuser edit kpi/subkpi/metric deactivate button
 	public function deactivate_value() 
 	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
 		if (empty($_GET['q'])) {
 			$this->session->set_flashdata('errors', '<div class="alert alert-red">Deactivate failed: No selected object to deactivate.</div>');
 			header('location: superuser_edit');
@@ -485,11 +540,22 @@ class User extends CI_Controller {
 			}
 			else if($level==2)
 			{
+				$query = $this->user_db->gen_query('kpi_name, parent_kpi', 'kpi', 'kpi_id='.$id)->row_array();
+				$subkpi = str_replace(" ", "_", $query['kpi_name']);
+				$kpi = $this->user_db->gen_query('kpi_name', 'kpi', 'kpi_id='.$query['parent_kpi'])->row_array()['kpi_name'];
+				$kpi = str_replace(" ", "_", $kpi);
 				$this->user_db->deactivate_2($id);
+				redirect('editvalue?q='.$kpi.'/'.$subkpi);
 			}
 			else if($level==3)
 			{
+				$query = $this->user_db->gen_query('kpi_id', 'fields', 'field_id='.$id)->row_array()['kpi_id'];
+				$query = $this->user_db->gen_query('kpi_name, parent_kpi', 'kpi', 'kpi_id='.$query)->row_array();
+				$subkpi = str_replace(" ", "_", $query['kpi_name']);
+				$kpi = $this->user_db->gen_query('kpi_name', 'kpi', 'kpi_id='.$query['parent_kpi'])->row_array()['kpi_name'];
+				$kpi = str_replace(" ", "_", $kpi);
 				$this->user_db->deactivate_3($id);
+				redirect('editvalue?q='.$kpi.'/'.$subkpi);
 			}
 			else if($level==4)
 			{
@@ -502,38 +568,49 @@ class User extends CI_Controller {
 	// superuser edit?q=kpi/subkpi
 	public function edit_values()
 	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		if (empty($_GET['q'])) {
 			$this->session->set_flashdata('errors', '<div class="alert alert-red">Edit failed: No selected KPI/SubKPI.</div>');
 			header('location: superuser_edit');
 		}
 		else {
 			$q = $this->parse_q($_GET['q']);
-			$iscu_id = 1001;
+			$iscu_id = $this->session->userdata('iscu_field');
 			
 			$current_kpi = $q['current_kpi'];
 			$current_subkpi = $q['current_subkpi'];
 			
-			$data['kpi'] = $this->user_db->sidebar(true);
-			$data['subkpi'] = $this->user_db->subsidebar(true);
-			$data['metric'] = $this->user_db->query_metric($current_subkpi);
-			$submetric = array();
+			$query1 = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$current_kpi.'"')->row_array();
+			$query2 = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$current_subkpi.'"')->row_array();
 			
-			foreach ($data['metric'] as $data_item):
-				if ( $data_item['has_breakdown']==true ):
-					$submetric = array_merge($submetric, $this->user_db->query_submetric($data_item['field_id']));
-				endif;
-			endforeach;
-			$data['checker'] = "notempty";
-			$data['submetric'] = $submetric;
-			$data['current_kpi'] = $current_kpi;
-			$data['current_subkpi'] = $current_subkpi;
-			$data['active'] = $this->user_db->get_active_result();
+			if (empty($query1) || empty($query2)) {
+				$this->session->set_flashdata('errors', '<div class="alert alert-red">Edit Value failed: Selected KPI/SubKPI does not exist.</div>');
+				header('location: superuser_edit');
+			}
+			else {
+				$data['kpi'] = $this->user_db->sidebar(true);
+				$data['subkpi'] = $this->user_db->subsidebar(true);
+				$data['metric'] = $this->user_db->query_metric($current_subkpi);
+				$submetric = array();
+				
+				foreach ($data['metric'] as $data_item):
+					if ( $data_item['has_breakdown']==true ):
+						$submetric = array_merge($submetric, $this->user_db->query_submetric($data_item['field_id']));
+					endif;
+				endforeach;
+				$data['checker'] = "notempty";
+				$data['submetric'] = $submetric;
+				$data['current_kpi'] = $current_kpi;
+				$data['current_subkpi'] = $current_subkpi;
+				$data['active'] = $this->user_db->get_active_result();
 
-			$this->load->view('kpi/header');
-			$this->load->view('kpi/banner');
-			$this->load->view('kpi/navbar_superuser');
-			$this->load->view('kpi/superuser_edit',$data);
-			$this->load->view('kpi/footer');
+				$this->load->view('kpi/header');
+				$this->load->view('kpi/banner');
+				$this->load->view('kpi/navbar_superuser');
+				$this->load->view('kpi/superuser_edit',$data);
+				$this->load->view('kpi/footer');
+			}
 		}
 	}
 	
@@ -647,8 +724,10 @@ class User extends CI_Controller {
 		return true;
 	}
 	
-	// superuser edit save changes
+	// superuser edit KPI/SubKPI/Metric save changes
 	public function changevalue() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('kpi', 'KPI Name', 'trim|required|min_length[3]|callback_check_kpichange');
 		$this->form_validation->set_rules('subkpi', 'SubKPI Name', 'trim|required|min_length[3]|callback_check_subkpichange');
@@ -680,41 +759,53 @@ class User extends CI_Controller {
 	// superuser editvalue?q=kpi/subkpi
 	public function edit_a_value()
 	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		if (empty($_GET['q'])) {
 			$this->session->set_flashdata('errors', '<div class="alert alert-red">Edit Value failed: No selected KPI/SubKPI</div>');
 			header('location: superuser_edit');
 		}
 		else {
 			$q = $this->parse_q($_GET['q']);
-			$iscu_id = 1001;
+			$iscu_id = $this->session->userdata('iscu_field');
 
 			$current_kpi = $q['current_kpi'];
 			$current_subkpi = $q['current_subkpi'];
-
-			$data['kpi'] = $this->user_db->sidebar(true);
-			$data['subkpi'] = $this->user_db->subsidebar(true);
-			$data['metric'] = $this->user_db->query_metric($current_subkpi);
-			$data['submetric'] = array();
-			foreach ($data['metric'] as $data_item):
-				if ( $data_item['has_breakdown'] ):
-					$data['submetric'] = array_merge($data['submetric'], $this->user_db->query_submetric($data_item['field_id']));
-				endif;
-			endforeach;
-			$data['path'] = $_GET['q'];
 			
-			$data['current_kpi'] = $current_kpi;
-			$data['current_subkpi'] = $current_subkpi;
+			$query1 = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$current_kpi.'"')->row_array();
+			$query2 = $this->user_db->gen_query('kpi_id', 'kpi', 'kpi_name="'.$current_subkpi.'"')->row_array();
 			
-			$data['kpi_value_id'] = $this->user_db->find_id($current_kpi);
-			$data['subkpi_value_id'] = $this->user_db->find_id($current_subkpi);
-			$data['checker'] = "editing";
-			$data['active'] = $this->user_db->get_active_result();
+			if (empty($query1) || empty($query2)) {
+				$this->session->set_flashdata('errors', '<div class="alert alert-red">Edit Value failed: Selected KPI/SubKPI does not exist.</div>');
+				header('location: superuser_edit');
+			}
 			
-			$this->load->view('kpi/header');
-			$this->load->view('kpi/banner');
-			$this->load->view('kpi/navbar_superuser');
-			$this->load->view('kpi/superuser_edit',$data);
-			$this->load->view('kpi/footer');
+			else {
+				$data['kpi'] = $this->user_db->sidebar(true);
+				$data['subkpi'] = $this->user_db->subsidebar(true);
+				$data['metric'] = $this->user_db->query_metric($current_subkpi);
+				$data['submetric'] = array();
+				foreach ($data['metric'] as $data_item):
+					if ( $data_item['has_breakdown'] ):
+						$data['submetric'] = array_merge($data['submetric'], $this->user_db->query_submetric($data_item['field_id']));
+					endif;
+				endforeach;
+				$data['path'] = $_GET['q'];
+				
+				$data['current_kpi'] = $current_kpi;
+				$data['current_subkpi'] = $current_subkpi;
+				
+				$data['kpi_value_id'] = $this->user_db->find_id($current_kpi);
+				$data['subkpi_value_id'] = $this->user_db->find_id($current_subkpi);
+				$data['checker'] = "editing";
+				$data['active'] = $this->user_db->get_active_result();
+				
+				$this->load->view('kpi/header');
+				$this->load->view('kpi/banner');
+				$this->load->view('kpi/navbar_superuser');
+				$this->load->view('kpi/superuser_edit',$data);
+				$this->load->view('kpi/footer');
+			}
 		}
 	}
 	
@@ -727,6 +818,8 @@ class User extends CI_Controller {
 	
 	// superuser activate KPI
 	function activate() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		list($data['inactive'], $data['kpi'], $data['subkpi']) = $this->user_db->get_inactive();
 		
 		list($metric_breakdown, $data['submetric']) = $this->user_db->get_inactive_submetric();
@@ -738,8 +831,6 @@ class User extends CI_Controller {
 		
 		$data['active'] = $this->user_db->get_active_result();
 		
-		
-		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
 		$this->load->view('kpi/navbar_superuser');
@@ -749,6 +840,8 @@ class User extends CI_Controller {
 	
 	// superuser submit activate kpi
 	function activate_kpi() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$active = $this->user_db->get_active_result();
 		if (!empty($active)) {
 			$this->session->set_flashdata('errors', '<div class="alert alert-red">Activate KPI failed: A result is currently active</div>');
@@ -759,20 +852,43 @@ class User extends CI_Controller {
 			header('location: superuser_activate');
 		}
 		else {
-			$this->debug($_POST);
-			$subkpi = array();
-			foreach ($this->input->post('metric') as $metric_group):
-				foreach ($metric_group as $field_id):
-					$this->user_db->activate($field_id, 'fields');
-				endforeach;
-				array_push($subkpi, array_search($metric_group, $_POST['metric']));
+			$data = array();
+			$data['active'] = array();
+			$fields = array();
+			$subkpis = array();
+			$kpis = array();
+			
+			$subkpi = $this->input->post('subkpi');
+			$subkpi = (empty($subkpi) ? array() : $this->input->post('subkpi'));
+			$kpi = $this->input->post('kpi');
+			$kpi = (empty($kpi) ? array() : $this->input->post('kpi'));
+			
+			foreach ($this->input->post('metric') as $field_id):
+				$fields[$field_id] = $this->user_db->gen_query('field_name', 'fields', 'field_id='.$field_id)->row_array()['field_name'];
+				$this->user_db->activate($field_id, 'fields');
 			endforeach;
-			$this->debug($subkpi);
-			//echo array_search($subkpi, $_POST['subkpi']);
+			
+			foreach ($subkpi as $subkpi_id):
+				$subkpis[$subkpi_id] = $this->user_db->gen_query('kpi_name', 'kpi', 'kpi_id='.$subkpi_id)->row_array()['kpi_name'];
+				$this->user_db->activate($subkpi_id, 'kpi');
+			endforeach;
+			
+			foreach ($kpi as $kpi_id):
+				$kpis[$kpi_id] = $this->user_db->gen_query('kpi_name', 'kpi', 'kpi_id='.$kpi_id)->row_array()['kpi_name'];
+				$this->user_db->activate($kpi_id, 'kpi');
+			endforeach;
+			
+			array_push($data['active'], $kpis, $subkpis, $fields);
+			$data['msg'] = '<div class="alert alert-green">Successfully activated the following:</div>';
+			$this->debug($data);
+			$this->session->set_flashdata('errors', $data);
+			header('location: superuser_activated');
 		}
 	}
 	
 	function assignISCU() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$result = $this->user_db->assignISCU();
 		
 		$location = 'location'.site_url('superuser_assign').'';
@@ -784,6 +900,8 @@ class User extends CI_Controller {
 	}
 	
 	function activate_results() {
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='superuser') $this->output->set_header('location: index');
+		
 		$this->load->library('form_validation');
 		$this->form_validation->set_message('is_unique', 'This Result Name already exists.');
 		$this->form_validation->set_rules('results_name', 'Result Name', 'trim|required|min_length[3]|is_unique[results.results_name]');
@@ -795,6 +913,128 @@ class User extends CI_Controller {
 		else {
 			$this->user_db->activate_result();
 			redirect('superuser_results');
+		}
+	}
+	
+	public function select()
+	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['user_type']!='auditor') $this->output->set_header('location: index');
+		
+		if (!isset($_POST['buttoncheck_name'])) header('location: auditor_home');
+		
+		$button_value = $_POST['buttoncheck_name'];
+		if($button_value==1)
+		{
+			if(isset($_POST['valueselected']))
+			{
+			$this->edit_viewaccountid();
+			} else
+			{
+				header('Location: auditor_verify');
+			}
+		} else if($button_value==2)
+		{
+			
+			if(isset($_POST['valueselected']))
+			{
+			$user_id = $this->session->userdata('user_id'); // previous value = 2;
+			$this->user_db->rejectselected_query(1001);
+			header('Location: auditor_verify');
+			} else {
+				header('Location: auditor_verify');
+			}
+		} else if($button_value==3)
+		{
+			$user_id = $this->session->userdata('user_id');
+			$this->user_db->approvevalue_query($this->session->userdata('iscu_field'));
+			$this->displayapproved();
+		} else if($button_value==4)
+		{
+			$this->user_db->editvaluesofaccountid($this->session->userdata('iscu_field'));
+			header('Location: auditor_verify');
+		}
+		
+	}
+	
+	public function edit_viewaccountid() // edit list of values by auditor
+	{
+		if (!isset($this->session->userdata['email']) || $this->session->userdata['usertype']!='auditor') $this->output->set_header('location: index');
+		
+		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
+		$identifier = 2;
+
+		$page='auditor_verify';
+		$user = "auditor";
+		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
+		$data['editvalues'] = $this->user_db->editselected_query();
+		$data['checker'] = "notempty";
+		$data['subchecker'] = "editable";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function auditor_verify_page()
+	{
+		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
+		$identifier = 2;
+	
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
+		$data['iscu_id'] = $iscu_id;
+		$data['checker'] = "notempty";
+		$data['subchecker'] = "uneditable";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function displayapproved()
+	{
+		$iscu_id = $this->session->userdata('iscu_field'); // hard coded pa
+		$identifier = 3;
+		
+		$data['kpi'] = $this->user_db->sidebar();
+		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
+		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
+		$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
+		$data['iscu_id'] = $iscu_id;
+		$data['checker'] = "notempty";
+		$data['subchecker'] = "approved";
+		
+		$this->load->view('kpi/header');
+		$this->load->view('kpi/banner');
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
+		$this->load->view('kpi/footer');
+	}
+	
+	public function logout()
+	{
+		$this->session->sess_destroy();
+		$this->output->set_header('location: index');
+	}
+	
+	public function usertype_checker($site)
+	{
+		if($this->session->userdata('user_type')!=$site)
+		{
+			$this->output->set_header('location: error');
 		}
 	}
 }

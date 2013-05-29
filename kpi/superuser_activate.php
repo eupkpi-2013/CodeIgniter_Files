@@ -17,11 +17,11 @@
 				echo '<ul class="indented-list">';
 				foreach ($subkpi as $subkpi_item):
 					if ($subkpi_item->parent_kpi == $kpi_item->kpi_id):
-						echo '<li><input type="checkbox" class="checklist" name="subkpi['.$kpi_item->kpi_id.'][]" value="'.$subkpi_item->kpi_id.'">'.$subkpi_item->kpi_name.'</input>';
+						echo '<li><input type="checkbox" class="checklist" name="subkpi[]" value="'.$subkpi_item->kpi_id.'">'.$subkpi_item->kpi_name.'</input>';
 						echo '<ul class="indented-list">';
 						foreach ($inactive as $inactive_item):
 							if ( $inactive_item->kpi_id == $subkpi_item->kpi_id ):
-								echo '<li><input class="checklist" type="checkbox" name="metric['.$subkpi_item->kpi_id.'][]" value="'.$inactive_item->field_id.'">'.$inactive_item->field_name.'</input>';
+								echo '<li><input class="checklist" type="checkbox" name="metric[]" value="'.$inactive_item->field_id.'">'.$inactive_item->field_name.'</input>';
 								if ( $inactive_item->has_breakdown ):
 									echo '<ul class="indented-list">';
 									foreach ( $submetric as $submetric_item ):

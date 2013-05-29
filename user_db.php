@@ -55,8 +55,8 @@
 		public function sidebar_verify($iscu_id) //ren's file
 		{
 			$this->db->query("drop view IF EXISTS all_users");
-			$this->db->query("create view all_users as SELECT users.user_id,account_id,iscu_id from field_values,users WHERE
-							  field_values.value_status_id='2' AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND 
+			$this->db->query("create view all_users as SELECT users.user_id,value_status_id,account_id iscu_id from field_values,users WHERE
+							  field_values.value_status_id=2 AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND 
 							  users.account_id=5");
 			$query = $this->db->query("SELECT DISTINCT user_id FROM all_users");
 			$this->db->query("drop view all_users");
@@ -74,10 +74,19 @@
 			return $query->result_array();
 		} */
 		
-		public function verify_value($user_id) //ren's file
-		{
-			$query = $this->db->get_where('field_values', array('user_id'=> $user_id));
-			return $query->result_array();
+		public function verify_value($iscu_id) //ren's file
+		{	
+			$query = $this->db->get_where('users', array('iscu_id'=> $iscu_id));
+			$query2 = array();
+				
+			foreach($query->result_array() as $query_item):
+				$tempquery = $this->db->get_where('field_values', array('user_id'=>$query_item['user_id']));
+				foreach($tempquery->result_array() as $tempquery_item):
+					array_push($query2, $tempquery_item);
+				endforeach;
+			endforeach;
+			
+			return $query2;
 		}
 		
  		public function allmetric1()
@@ -90,8 +99,8 @@
 		public function allmetric($iscu_id, $identifier) // ren
 		{
 			$this->db->query("drop view IF EXISTS all_results");
-			$this->db->query("create view all_results as SELECT kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
-			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id=(select value_status_id from value_status where value_status_name='$identifier')");	
+			$this->db->query("create view all_results as SELECT value_status_id,kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
+			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id=$identifier AND results_id=1"); //hard-coded pa yung 1	
 			$query = $this->db->get('all_results');
 			$this->db->query("drop view all_results");
 			return $query->result_array();
@@ -106,8 +115,7 @@
 		public function updates($iscu_id) //ren
 		{
 			$this->db->query("drop view IF EXISTS all_updates");
-			$this->db->query("create view all_updates as SELECT * from iscu_updates,updates WHERE
-			                  iscu_updates.updates_id=updates.update_id");			
+			$this->db->query("create view all_updates as SELECT * from iscu_updates,updates WHERE iscu_updates.updates_id=updates.update_id");
 			$query = $this->db->get_where('all_updates', array('iscu_id'=> $iscu_id));
 			$this->db->query("drop view all_updates");
 			return $query->result_array();
@@ -338,7 +346,7 @@
 				$query = $this->db->get_where('kpi', array('kpi_id'=>$id));
 				$value = $query->row_array()['parent_kpi'];
 				$query = $this->db->get_where('kpi', array('parent_kpi'=>$value, 'active'=>true));
-				if (empty($query->num_rows)) deactivate_parent($value, 'kpi');
+				if ($query->num_rows==0) $this->deactivate_parent($value, 'kpi');
 			}
 		}
 
@@ -359,10 +367,9 @@
 						// endforeach;
 					// endif;
 				// endforeach;
-				
 				$value = $query->result_array()[0]['kpi_id'];
 				$query = $this->db->query("select * from fields where kpi_id=$value and active=1");
-				if (empty($query->num_rows)) $this->deactivate_parent($value, 'kpi');
+				if ($query->num_rows==0) $this->deactivate_parent($value, 'kpi');
 			}
 		}
 		
@@ -379,7 +386,7 @@
 				$value = $query->row_array()['parent_kpi'];
 				if ($value != 0) {
 					$query = $this->db->get_where('kpi', array('parent_kpi'=>$value, 'active'=>1));
-					if (empty($query->num_rows)) $this->deactivate_parent($value, 'kpi');
+					if ($query->num_rows==0) $this->deactivate_parent($value, 'kpi');
 				}
 			}
 			// wag muna (for breakdown)
@@ -388,8 +395,7 @@
 		
 		public function activate($id, $table) {
 			$sql = "update $table set active=1 where ".($table=='fields' ? "field" : "kpi" )."_id=$id";
-			echo '<br>'.$sql;
-			//$this->db->query($sql);
+			$this->db->query($sql);
 		}
 		
 		public function get_inactive() {
@@ -446,5 +452,59 @@
 				$this->db->query("insert into results (results_name, active, project_id) values ('$name', '1', '1')");
 			}
 		}
+		
+		public function editselected_query()
+		{
+			$query = array();
+			foreach($_POST['valueselected'] as $element):
+				$id =  strtok($element, "/");
+				$value = strtok("/");
+				array_push($query,$this->db->get_where('field_values', array('field_id'=> $id, 'value'=>$value))->row_array());
+			endforeach;
+			return $query;
+		}
+		
+		public function rejectselected_query($iscu_id)
+		{
+			$query = $this->db->get_where('users', array('iscu_id'=>$iscu_id));
+			
+			foreach($_POST['valueselected'] as $element):
+				$id =  strtok($element, "/");
+				$value = strtok("/");
+				
+				foreach($query->result_array() as $query_item):
+					$userid = $query_item['user_id'];
+					$this->db->query("UPDATE field_values SET value_status_id=4 WHERE user_id=$userid AND field_id=$id");
+				endforeach;
+			endforeach;
+		}
+		
+		public function approvevalue_query($iscu_id)
+		{
+			$query = $this->db->get_where('users', array('iscu_id'=>$iscu_id));
+			
+			foreach($query->result_array() as $query_item):
+				$userid = $query_item['user_id'];
+				$this->db->query("UPDATE field_values SET value_status_id=3 WHERE user_id=$userid");
+			endforeach;
+
+		}
+		
+		public function editvaluesofaccountid($iscu_id)
+		{
+			$query = $this->db->get_where('users', array('iscu_id'=>$iscu_id));
+		
+			foreach(array_combine($_POST['edited'],$_POST['edited_id']) as $value => $id):
+				foreach($query->result_array() as $query_item):
+					$userid = $query_item['user_id'];
+					$this->db->query("UPDATE field_values SET value=$value WHERE user_id=$userid AND field_id=$id");
+				endforeach;
+			endforeach;
+		}
+		public function user_type($account_id)
+	    {
+	        $query = $this->db->get_where('accounts', array('account_id'=>$account_id));
+	        return $query->row_array();
+	    }
 	}
 ?>
