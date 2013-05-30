@@ -7,6 +7,7 @@ html, body {
 	margin: 0;
 	position: absolute;
 	font-family: 'Merriweather Sans', sans-serif;
+	font-size: 1em;
 }
 a{
 	text-decoration: none;
@@ -143,6 +144,16 @@ td{
 }
 .button-green:hover{
 	background-color: #49AF00;
+}
+.button-blue{
+	background-color: #31C28B;
+}
+.button-blue:hover{
+	background-color: #58C29A;
+}
+.button-small{
+	border-radius: 3px;
+	font-size: 0.8em;
 }
 #overlayEffect
 {
@@ -334,9 +345,16 @@ td{
 .kpitable td{
 	/* padding: 10px; */
 }
-.table-lined tr{
+.table-lined{
+	border-collapse:collapse;
+	word-wrap: break-word;
+}
+.table-lined tr:hover{
+
+}
+.table-lined td{
 	border-bottom: 1px solid;
-	border-bottom-color: #ebb;
+	border-bottom-color: white;
 }
 .table-lined th{
 	border-bottom: 1px solid;

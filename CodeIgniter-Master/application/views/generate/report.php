@@ -128,7 +128,7 @@
 	</script>
 <div id="user-contents" class="contents">
 	<?php
-		echo '<a href="'.site_url().'/publicreports"><button class="righted">Back to Public Reports</button></a>';
+		// echo '<a href="'.site_url().'/publicreports"><button class="righted">Back to Public Reports</button></a>';
 		echo '<h3>'.$output['output_name'].'</h3>';
 		$timestamp = strtotime($output['timestamp']);
 		echo '<p>Published: '.date("F j, Y, g:i a", $timestamp).' by '.$user['fname'].' '.$user['lname'].'</p>';

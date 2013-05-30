@@ -36,5 +36,6 @@
 	</table>
 	<?php } ?>
 	</div>
+	
 	<?php if(isset($account) && ($account==1 || $account==2)) echo '<button onclick="generate()" class="righted">Generate New Report</button>'; ?>
 </div>

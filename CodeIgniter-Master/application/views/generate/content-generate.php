@@ -97,6 +97,11 @@ function generate(){
 				echo '<ul class="indented-list"><li><input type="checkbox"  class="checklist">'.$subkpi['kpi_name'].'</input><br>';
 				foreach($metrics as $metric){
 					if($metric['kpi_id']==$subkpi['kpi_id']){
+						// foreach($iscuperfield as $iscu){
+							// if($iscu['field_id']==$metric['field_id']){
+								// echo $iscu['iscu_id']."yes";
+							// }
+						// }
 						echo '<ul class="indented-list"><li><input id=checkfield'.$metric['field_id'].' name="checkfield'.$metric['field_id'].'" type="checkbox"  class="checklist" ';
 						if(isset($output)){
 							foreach($output_fields as $field){

@@ -43,18 +43,40 @@
 			return $added;
 		}
 		
-		public function getrating($field_id, $user_id, $results_id){
+		public function getrating($field_id, $iscu_id, $results_id){
 			$sql = "SELECT *
-					FROM field_values
-					WHERE field_id=".$field_id." AND user_id=".$user_id." AND results_id=".$results_id;
+					FROM  field_values
+					JOIN users ON field_values.user_id = users.user_id
+					JOIN iscu_field ON iscu_field.iscu_id = users.iscu_id 
+					AND field_values.field_id = iscu_field.field_id
+					WHERE users.iscu_id = ".$iscu_id."
+					AND field_values.field_id = ".$field_id."
+					AND results_id =".$results_id;
+			echo $sql;
 			$query = $this->db->query($sql);
 			return $query->row_array();
 		}
 		
-		public function getallratings($user_id, $results_id){
-			$sql = "SELECT fields.field_name, fields.kpi_id, field_values.value
-					FROM field_values, fields
-					WHERE user_id=".$user_id." AND results_id=".$results_id." AND field_values.field_id=fields.field_id";
+		public function getallratings($iscu_id, $results_id){
+			// $sql = "SELECT fields.field_name, fields.kpi_id, field_values.value, field_values.results_id
+					// FROM field_values, fields
+					// WHERE user_id=".$user_id." AND results_id=".$results_id." AND field_values.field_id=fields.field_id";
+			$sql = "SELECT *
+					FROM  field_values
+					JOIN users ON field_values.user_id = users.user_id
+					JOIN iscu_field ON iscu_field.iscu_id = users.iscu_id 
+					AND field_values.field_id = iscu_field.field_id
+					WHERE users.iscu_id = ".$iscu_id."
+					AND results_id =".$results_id;
+			$query = $this->db->query($sql);
+			return $query->result_array();
+		}
+		
+		public function getmetrics($iscu_id){
+			$sql = "SELECT *
+					FROM  iscu_field
+					WHERE iscu_id = ".$iscu_id;
+			// echo $sql;
 			$query = $this->db->query($sql);
 			return $query->result_array();
 		}

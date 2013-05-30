@@ -18,13 +18,15 @@
 		}
 		
 		public function get_updates($user_id, $iscu_id, $account_id){
-			$sql = "SELECT updates.*
+			$sql = "SELECT updates.*, users.*
 					FROM updates
 					JOIN iscu_updates
 					ON iscu_updates.updates_id = updates.update_id
+					JOIN users ON users.user_id = updates.user_id
 					WHERE iscu_updates.iscu_id=".$iscu_id."
 					AND iscu_updates.account_id=".$account_id."
 					ORDER BY timestamp DESC";
+			// echo $sql;
 			$query = $this->db->query($sql);
 			return $query->result_array();
 		}

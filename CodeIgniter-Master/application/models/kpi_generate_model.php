@@ -57,6 +57,14 @@ class kpi_generate_model extends CI_Model {
 		return $query->result_array();
 	}
 	
+	public function get_all_inactive_results(){
+		$sql = "SELECT * 
+				FROM results
+				WHERE active=0";
+		$query = $this->db->query($sql);
+		return $query->result_array();
+	}
+	
 	public function get_all_iscus(){
 		$query = $this->db->get('iscu');
 		return $query->result_array();
@@ -85,10 +93,12 @@ class kpi_generate_model extends CI_Model {
 		return $query->result_array();
 	}
 	
-	public function get_field_value($results_id, $field_id){
-		$sql = "SELECT * FROM `field_values` 
-				WHERE results_id=".$results_id." 
-				AND field_id=".$field_id;
+	public function get_field_value($results_id, $field_id, $iscu_id){
+		$sql = "SELECT * FROM field_values, users 
+				WHERE results_id=".$results_id."
+				AND field_id = ".$field_id."
+				AND field_values.user_id = users.user_id
+				AND users.iscu_id = ".$iscu_id;
 		$query = $this->db->query($sql);
 		return $query->row_array();
 	}
@@ -121,6 +131,16 @@ class kpi_generate_model extends CI_Model {
 		array_push($breadcrumbs,$result);
 		$breadcrumbs = array_reverse($breadcrumbs, true);
 		return $breadcrumbs;
+	}
+	
+	public function get_iscu($field_id){
+		$sql = "SELECT DISTINCT * 
+				FROM `iscu_field`
+				JOIN iscu ON iscu.iscu_id = iscu_field.iscu_id
+				WHERE field_id = ".$field_id;
+		// echo $sql;
+		$query = $this->db->query($sql);
+		return $query->result_array();
 	}
 	
 	public function get_output_types(){
@@ -277,12 +297,23 @@ class kpi_generate_model extends CI_Model {
 		return $query->result_array();
 	}
 	
-	public function get_output_field_values($output_id, $field_id){
-		$sql = "SELECT value
-				FROM field_values, output_results
-				WHERE field_values.results_id=output_results.results_id
-				AND field_id=".$field_id."
-				AND output_id=".$output_id;
+	public function get_output_field_values($output_id, $field_id, $iscu_id){
+		// $sql = "SELECT *
+				// FROM iscu_field
+				// JOIN field_values ON iscu_field.field_id = field_values.field_id
+				// JOIN output_results ON output_results.results_id = field_values.results_id
+				// JOIN users ON users.iscu_id = iscu_field.iscu_id AND users.user_id = field_values.user_id
+				// WHERE field_values.results_id=output_results.results_id
+				// AND field_values.field_id=".$field_id."
+				// AND output_id=".$output_id;
+		$sql = "SELECT field_values.*
+				FROM field_values, users, output_results
+				WHERE users.iscu_id = ".$iscu_id."
+				AND field_values.user_id = users.user_id
+				AND field_values.field_id = ".$field_id."
+				AND field_values.results_id = output_results.results_id
+				AND output_id = ".$output_id.";";
+		// echo $sql;
 		$query = $this->db->query($sql);
 		return $query->result_array();
 	}

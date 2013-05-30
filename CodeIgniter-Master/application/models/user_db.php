@@ -55,8 +55,8 @@
 		public function sidebar_verify($iscu_id) //ren's file
 		{
 			$this->db->query("drop view IF EXISTS all_users");
-			$this->db->query("create view all_users as SELECT users.user_id,tag,account_id iscu_id from field_values,users WHERE
-							  field_values.tag='submitted' AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND 
+			$this->db->query("create view all_users as SELECT users.user_id,value_status_id,account_id iscu_id from field_values,users WHERE
+							  field_values.value_status_id=2 AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND 
 							  users.account_id=5");
 			$query = $this->db->query("SELECT DISTINCT user_id FROM all_users");
 			$this->db->query("drop view all_users");
@@ -86,11 +86,21 @@
 			return $query->result_array();
 		}
 		
+		// public function allmetric($iscu_id, $identifier) // ren
+		// {
+			// $this->db->query("drop view IF EXISTS all_results");
+			// $this->db->query("create view all_results as SELECT value_status_id,kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
+			                  // field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id='$identifier'");	
+			// $query = $this->db->get('all_results');
+			// $this->db->query("drop view all_results");
+			// return $query->result_array();
+		// }
+		
 		public function allmetric($iscu_id, $identifier) // ren
 		{
 			$this->db->query("drop view IF EXISTS all_results");
-			$this->db->query("create view all_results as SELECT kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
-			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id=(select value_status_id from value_status where value_status_name='$identifier')");	
+			$this->db->query("create view all_results as SELECT value_status_id,kpi_id,results_id,fields.field_id,value,iscu_id,field_values.user_id,field_name from field_values,users,fields WHERE
+			                  field_values.field_id=fields.field_id AND field_values.user_id=users.user_id AND users.iscu_id=$iscu_id AND field_values.value_status_id=$identifier AND results_id=1"); //hard-coded pa yung 1	
 			$query = $this->db->get('all_results');
 			$this->db->query("drop view all_results");
 			return $query->result_array();
@@ -178,9 +188,13 @@
 		// }
 		
 		
-		public function submitRates() {
+		public function submitRates($iscu_id, $result_id) {
 			// $sql = "UPDATE field_values SET tag ='submitted' WHERE user_id = 1 AND tag = 'unverified'";
-			$sql = "UPDATE field_values SET value_status_id =2 WHERE user_id = 1 AND results_id=1";
+			$sql = "UPDATE field_values, users 
+					SET field_values.value_status_id =2 
+					WHERE users.user_id = field_values.user_id
+					AND field_values.results_id = ".$result_id." AND iscu_id = ".$iscu_id;
+			// echo $sql;
 			$this->db->query($sql);
 		}
 		
@@ -194,7 +208,7 @@
 		
 		public function period_value()
 		{
-			$query = $this->db->get('results');
+			$query = $this->db->get_where('results', array('active'=>0));
 			return $query->result_array();
 		}
 		
@@ -227,7 +241,7 @@
 			$id = $this->input->post('id');
 			
 			foreach ( $this->input->post('breakdown_name') as $breakdown_item ):
-				echo $breakdown_item;
+				// echo $breakdown_item;
 				$this->db->query("insert into breakdown (breakdown_name, field_id, active) values ('$breakdown_item', '$id' ,'0')");
 				$this->db->update("update fields set has_breakdown=1 where field_id=$id");
 			endforeach;
@@ -391,6 +405,69 @@
 			endforeach;
 		}
 		
+		public function editselected_query()
+		{
+			$query = array();
+			foreach($_POST['valueselected'] as $element):
+				$id =  strtok($element, "/");
+				$value = strtok("/");
+				array_push($query,$this->db->get_where('field_values', array('field_id'=> $id, 'value'=>$value))->row_array());
+			endforeach;
+			return $query;
+		}
+
+		public function rejectselected_query($iscu_id, $result_id)
+		{
+			$sql = "UPDATE field_values, users 
+						SET field_values.value_status_id = 5
+						WHERE users.user_id = field_values.user_id
+						AND field_values.results_id = ".$result_id." AND iscu_id = ".$iscu_id;
+			$this->db->query($sql);
+			
+			foreach($_POST['valueselected'] as $element):
+				$id =  strtok($element, "/");
+				// $value = strtok("/");
+				$sql = "UPDATE field_values, users 
+						SET field_values.value_status_id = 4
+						WHERE users.user_id = field_values.user_id
+						AND field_values.results_id = ".$result_id." AND iscu_id = ".$iscu_id." AND field_id=".$id;
+				$this->db->query($sql);
+
+			endforeach;
+		}
+
+		// public function approvevalue_query($user_id)
+		// {
+			// $this->db->query("UPDATE field_values SET value_status_id=3 WHERE user_id=$user_id");
+		// }
+
+		public function approvevalue_query($iscu_id, $result_id){
+			$sql = "UPDATE field_values, users 
+					SET field_values.value_status_id = 3 
+					WHERE users.user_id = field_values.user_id
+					AND field_values.results_id = ".$result_id." AND iscu_id = ".$iscu_id;
+			$query = $this->db->query($sql);
+		}
+		
+		public function editvaluesofaccountid($user_id, $iscu_id, $result_id)
+		{
+			// echo var_dump($_POST);
+			// echo var_dump($_POST['edited']);
+			// echo var_dump($_POST['edited_id']);
+			$combined = array_combine($_POST['edited_id'], $_POST['edited']);
+			// echo var_dump($combined);
+			
+			foreach($combined as $id => $value):
+				// $this->db->query("UPDATE field_values SET value=$value WHERE user_id=$user_id AND field_id=$id");
+				$sql = "UPDATE field_values, users 
+					SET field_values.value = ".$value.", field_values.user_id = ".$user_id."
+					WHERE users.user_id = field_values.user_id
+					AND field_values.results_id = ".$result_id." AND iscu_id = ".$iscu_id." AND field_id = ".$id;
+				// echo $sql;
+				$query = $this->db->query($sql);
+			endforeach;
+		}
+		
 		public function get_all_iscus(){
 			$query = $this->db->get('iscu');
 			return $query->result_array();
@@ -402,13 +479,11 @@
 		}
 		
 		public function get_answered_fields($iscu_id, $results_id){
-			$sql = "SELECT * 
-					FROM `field_values`
-					JOIN iscu_field
-					ON field_values.field_id =iscu_field.field_id
-					WHERE field_values.results_id = ".$results_id."
-					AND iscu_id = ".$iscu_id;
-			echo $sql;
+			$sql = "SELECT * FROM `field_values`
+					JOIN users ON users.user_id = field_values.user_id
+					JOIN fields ON fields.field_id =field_values.field_id
+					WHERE field_values.results_id = ".$results_id." AND iscu_id = ".$iscu_id;
+			// echo $sql;
 			$query = $this->db->query($sql);
 			return $query->result_array();			
 		}
@@ -427,7 +502,7 @@
 					ON field_values.field_id=iscu_field.field_id
 					WHERE value_status_id = 1
 					AND iscu_id=".$iscu_id;
-			echo $sql;
+			// echo $sql;
 			$query = $this->db->query($sql);
 			return $query->result_array();
 		}
@@ -435,7 +510,7 @@
 		public function get_iscu($iscu_id){
 			$sql = "SELECT * FROM iscu
 					WHERE iscu_id=".$iscu_id;
-			echo $sql;
+			// echo $sql;
 			$query = $this->db->query($sql);
 			return $query->row_array();
 		}
@@ -443,7 +518,7 @@
 		public function get_user($user_id){
 			$sql = "SELECT * FROM users
 					WHERE user_id=".$user_id;
-			echo $sql;
+			// echo $sql;
 			$query = $this->db->query($sql);
 			return $query->row_array();		
 		}

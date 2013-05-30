@@ -10,9 +10,12 @@ class User extends CI_Controller {
 		$this->load->library('session');
 		
 		$newdata = array(
-					'iscu_id' => '',
-					'user_id' => '',
-					'account_id' => '');
+					'iscu_id' => '1001',
+					'user_id' => '4',
+					'account_id' => '5',
+					'user_type' => 'user',
+					'email' => "qwe@qwe.com"
+					);
 		$this->session->set_userdata($newdata);
 	}
 	
@@ -111,9 +114,22 @@ class User extends CI_Controller {
 		if ($openid->mode) {
 			if ($openid->validate()) {
 				$email = $openid->getAttributes()['contact/email'];
-				$user = $this->user_db->gen_query('user_id, iscu_id, status_id','users','email="'.$email.'"');
+				$user = $this->user_db->gen_query('account_id, user_id, iscu_id, status_id','users','email="'.$email.'"');
 				if ($user->num_rows > 0) {
-					if ($user->result()[0]->status_id == 1) $this->output->set_header('location: redirect');
+					if ($user->result()[0]->status_id == 1)
+					{
+						$usertype = $this->user_db->user_type($user->result()[0]->account_id);
+						$Cuser = strtolower($usertype['account_name']);
+						$newdata = array(
+							'iscu_id' => $user->result()[0]->iscu_id,
+							'user_id' => $user->result()[0]->user_id,
+							'user_type' => $Cuser,
+							'email' => $email,
+							'account_id' => $user->result()[0]->account_id,
+							);
+						$this->session->set_userdata($newdata);
+						$this->output->set_header('location: redirect');
+					}
 					else if ($user->result()[0]->status_id == 2) $this->output->set_header('location: redirect_fail');
 					else $this->output->set_header('location: redirect_fail');
 				}
@@ -125,30 +141,34 @@ class User extends CI_Controller {
 	public function view($page) // general view function
 	{
 		// not sure kung kelangan, pero magandang merong 404 page
-		//if( !file_exists('application/views/kpi/'.$page.'.php'))
-		//{
-			//$this->load->helper('url');
-			//echo site_url();
-			//show_404();
-		//}
+		if( !file_exists('application/views/kpi/'.$page.'.php'))
+			show_404();
 		
 		//$data['title'] = ucfirst($page);
 		
-		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect'))) {
-			$user_id = 1; // hard coded
-			$account_id = 5; // hard coded
-			$iscu_id = 1001; // hard coded pa
-				
-			$data['kpi'] = $this->user_db->sidebar();
-			$data['subkpi'] = $this->user_db->subsidebar();
-			// $data['update'] = $this->user_db->updates($iscu_id);
-			$data['checker'] = "empty";
+		if ($page != 'index' && strncmp($page, 'redirect', strlen('redirect')) && $page != 'error') {
+			if (!isset($this->session->userdata['email']))
+			{
+				$this->output->set_header('location: index');
+			}
+			$user_id = $this->session->userdata('user_id');
+			$account_id = $this->session->userdata('account_id');
+			$iscu_id = $this->session->userdata('iscu_id');
+
+			$user = strtok($page, "_");	
+			$this->usertype_checker($user);
 			
-			$user = strtok($page, "_");
+			$data['kpi'] = $this->user_db->sidebar(($user=='user' ? false : true));
+			$data['subkpi'] = $this->user_db->subsidebar(($user=='user' ? false : true));
+			$data['updates'] = $this->updates_model->get_updates($user_id,$iscu_id,$account_id);
+			
+			$data['checker'] = "empty";
+			$data['active'] = $this->updates_model->get_active_result();
+			$data['metric'] = $this->user_db->allmetric1();
+			$data['iscu'] = $this->user_db->iscu_sidebar();
 			
 			if ( $page == 'superuser_activate' ) $this->activate();
 			else if ($page != 'superuser_accounts' && $page != 'superuser_addaccount') {
-				$data['updates'] = $this->updates_model->get_updates(1,$iscu_id,$account_id);
 				
 				$this->load->view('kpi/header');
 				$this->load->view('kpi/banner');
@@ -159,22 +179,34 @@ class User extends CI_Controller {
 			}
 			else $this->view_accounts($page);
 		}
+		else if ($page == 'error') {
+			$this->load->view('kpi/'.$page);
+		}
 		else {
+			if (isset($this->session->userdata['email'])) {
+				$this->output->set_header("location: ".$this->session->userdata['user_type']);
+			}
 			$this->load->view('kpi/'.$page);
 		}
 	}
 	
 	public function viewmetric() // IMPORTANT TO FIX !!! error check din
 	{
-		/* $post_values = $this->input->post(NULL, true);
-		$this->load->library('form_validation');
-		if (!empty($post_values) && !in_array("", $post_values)) {
-			$save = true;
+		if (!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
 		}
-		$save = false; */
-		$q = $this->parse_q($_GET['q']);
-		$iscu_id = 1001; // hard coded
-		$identifier = "verified";
+		
+		$user_id = $this->session->userdata('user_id');
+		$account_id = $this->session->userdata('account_id');
+		$iscu_id = $this->session->userdata('iscu_id');
+		$result = $this->updates_model->get_active_result();
+		
+		// load model
+		$this->load->model('addratemodel');		
+		
+		$q = $this->parse_q($_GET['q']);		
+		$identifier = 3;
 		
 		$current_kpi = $q['current_kpi'];
 		$current_subkpi = $q['current_subkpi'];
@@ -182,13 +214,21 @@ class User extends CI_Controller {
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['period'] = $this->user_db->period_value();
-		$data['metric_values'] = $this->user_db->allmetric($iscu_id, $identifier);
+		// $data['metric_values'] = $this->user_db->allmetric($iscu_id, $identifier);
+		
+		$data['prev_values'] = array();
+		foreach($data['period'] as $period){
+			array_push( $data['prev_values'], $this->addratemodel->getallratings($iscu_id, $period['results_id']));
+		}
 		
 		$data['current_kpi'] = $current_kpi;
 		$data['current_subkpi'] = $current_subkpi;
 		
 		$data['metric'] = $this->user_db->query_metric($current_subkpi);
 		$data['checker'] = "notempty";
+		
+		$result =  $this->updates_model->get_active_result();
+		$data['active_result'] = $result;
 		
 		/* for ($i = 1; $i < count($data['metric'])+1; $i++) {
 			$this->form_validation->set_rules('answer'.$i, $data['metric'][$i-1]['field_name'], 'trim|required|numeric');
@@ -198,18 +238,12 @@ class User extends CI_Controller {
 			header('location: rate?q='.$_GET['q']);
 		} */
 		
-		// load model
-		$this->load->model('addratemodel');
-		$user_id = 1; //hard coded
-		$iscu_id = 1001; //hard coded
-		$results_id = 1; // hard coded
-		
 		// check kung naglagay ng value, tapos update db
 		$counter = 0;
 		while($counter<count($_POST)){
 			$key = substr(key($_POST),6);
 			$val = current($_POST);
-			$added = $this->addratemodel->adduserrate($key, $val, $user_id, $results_id);
+			$added = $this->addratemodel->adduserrate($key, $val, $user_id, $result['results_id']);
 			if($added){
 				$update_id = $this->answered_rating_update($user_id, $iscu_id);
 			}
@@ -220,12 +254,16 @@ class User extends CI_Controller {
 		// get value kung meron na
 		$data['metric_value'] = array();
 		foreach($data['metric'] as $metric){
-			$value = $this->addratemodel->getrating($metric['field_id'], $user_id, $results_id);
-			if(count($value)==0)
+			$rating = $this->addratemodel->getrating($metric['field_id'], $iscu_id, $result['results_id']);
+			if(count($rating)==0){
 				$value = "";
-			else
-				$value = $value['value'];
-			array_push($data['metric_value'], $value);
+				$status = "1";
+			}
+			else{
+				$value = $rating['value'];
+				$status = $rating['value_status_id'];
+			}
+			array_push($data['metric_value'], array('value'=>$value, 'status'=>$status));
 		}
 		
 		$next = false;
@@ -256,33 +294,53 @@ class User extends CI_Controller {
 	}
 	
 	public function user_rated(){
+		if (!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+	
 		// load model
 		$this->load->model('addratemodel');
-		$user_id = 1; //hard coded
-		$iscu_id = 1001;
-		$results_id = 1; // hard coded
+		$user_id = $this->session->userdata('user_id');
+		$account_id = $this->session->userdata('account_id');
+		$iscu_id = $this->session->userdata('iscu_id');
+		$result = $this->updates_model->get_active_result();
 		
 		// check kung naglagay ng value, tapos update db
 		$counter = 0;
 		while($counter<count($_POST)){
 			$key = substr(key($_POST),6);
 			$val = current($_POST);
-			$added = $this->addratemodel->adduserrate($key, $val, $user_id, $results_id);
+			$added = $this->addratemodel->adduserrate($key, $val, $user_id, $result['results_id']);
 			if($added){
-				$update_id = $this->answered_rating_update($iscu_id);
+				$update_id = $this->answered_rating_update($user_id,$iscu_id);
 			}
 			next($_POST);
 			$counter++;
 		}
-		$iscu_id = 1001; // hard coded pa
 				
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
+		$data['metrics'] = $this->addratemodel->getmetrics($iscu_id);
 		$data['update'] = $this->user_db->updates($iscu_id);
 		$data['checker'] = "empty";
 		$user = "user";
 		
-		$data['fieldvalues'] = $this->addratemodel->getallratings($user_id, $results_id);
+		$data['active_result'] = $result;		
+		if($result){
+			// $data['startedrating'] = count($this->user_db->get_answered_fields($iscu_id, $result['results_id']));
+			$data['fieldvalues'] = $this->user_db->get_answered_fields($iscu_id, $result['results_id']);
+			$data['toverify'] = false;
+			foreach($data['fieldvalues'] as $fieldvalue){
+				if($fieldvalue['value_status_id']==1 || $fieldvalue['value_status_id']==4){
+					$data['toverify'] = true;
+					break;
+				}
+			}
+			if(count($data['fieldvalues'])!=count($data['metrics'])){
+				$data['toverify'] = false;
+			}
+		}
 		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
@@ -292,67 +350,83 @@ class User extends CI_Controller {
 	}
 	
 	public function submit() { // IMPORTANT TO FIX !!!
-		$user_id = 1; // hard coded
-		$iscu_id = 1001; // hard coded
+		if (!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}	
+	
+		$user_id = $this->session->userdata('user_id');
+		$account_id = $this->session->userdata('account_id');
+		$iscu_id = $this->session->userdata('iscu_id');
+		$result = $this->updates_model->get_active_result();
 		
 		$this->load->helper('url');
 
 		// update db
-		$this->load->model('user_db');
-		$this->user_db->submitRates();
+		$this->user_db->submitRates($iscu_id, $result['results_id']);
 		
 		$this->submit_ratings_update($user_id, $iscu_id);
 		
 		// redirect to rate page
-		redirect('user_rate');
+		redirect('user_rated');
 		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
 		$this->load->view('kpi/footer');
 	}
 	
-	public function viewuser() // auditor
+	public function auditor_verify_page($subchecker="uneditable")
 	{
-		$page='auditor_verify';
-		$user = strtok($page, "_");
+		if (!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
 		
-		$iscu_id = 1001; // hard coded pa
-		
-		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
-		$data['checker'] = "empty"; // hard coded pa
-		
-		$this->load->view('kpi/header');
-		$this->load->view('kpi/banner');
-		$this->load->view('kpi/navbar_'.$user);
-		$this->load->view('kpi/'.$page,$data);
-		$this->load->view('kpi/footer');
-	}
+		$user_id = $this->session->userdata('user_id');
+		$account_id = $this->session->userdata('account_id');
+		$iscu_id = $this->session->userdata('iscu_id');
+		$result = $this->updates_model->get_active_result();
 	
-	public function viewaccountid() // audior list ng mga unverified rate
-	{
-		$q = $_GET['q'];
-		$iscu_id = 1001; // hard coded pa
-		$identifier = "submitted";
-		
-		$page='auditor_verify';
-		$user = strtok($page, "_");
-		
 		$data['kpi'] = $this->user_db->sidebar();
 		$data['subkpi'] = $this->user_db->subsidebar();
 		$data['userid'] = $this->user_db->sidebar_verify($iscu_id);
-		$data['metric'] = $this->user_db->allmetric($iscu_id, $identifier);
-		$data['verifyvalue'] = $this->user_db->verify_value($user_id);
-		$data['user_id'] = $user_id;
-		$data['checker'] = "notempty"; // hard coded pa
+		$data['active_result'] = $result;
+		$data['iscu_id'] = $iscu_id;
+		$data['subchecker'] = $subchecker;
+			
+		if(count($result)){
+			$data['metric'] = $this->user_db->get_answered_fields($iscu_id, $result['results_id']);
+			$data['verifyvalue'] = $this->user_db->verify_value($iscu_id);
+			
+			foreach($data['metric'] as $fieldvalue){
+				if($fieldvalue['value_status_id']==1 || $fieldvalue['value_status_id']==4){
+					$data['checker'] = "empty";
+					break;
+				}
+				if($fieldvalue['value_status_id']==3){
+					$data['checker'] = "verified";
+					break;
+				}
+			}
+			
+			if($data['subchecker']=="editable"){
+				$data['editvalues'] = $this->user_db->editselected_query();
+			}			
+		}		
 		
 		$this->load->view('kpi/header');
 		$this->load->view('kpi/banner');
-		$this->load->view('kpi/navbar_'.$user);
-		$this->load->view('kpi/'.$page,$data);
+		$this->load->view('kpi/navbar_auditor');
+		$this->load->view('kpi/auditor_verify',$data);
 		$this->load->view('kpi/footer');
 	}
 	
 	public function view_accounts($page) { // view accounts for super user
+		if (!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
 		$data['accounts'] = $this->user_db->get_accounts();
 		$data['iscu'] = $this->user_db->gen_query('iscu', 'iscu');
 		$data['account_name'] = $this->user_db->gen_query('account_name','accounts','');
@@ -394,9 +468,9 @@ class User extends CI_Controller {
 			$this->load->view('kpi/redirect', $data);
 			
 			if(isset($_GET['q']))
-				$this->edit_user_update($new_user_id);
+				$this->edit_user_update($this->session->userdata('user_id'));
 			else
-				$this->new_user_update($new_user_id);
+				$this->new_user_update($this->session->userdata('user_id'));
 		}
 	}
 	
@@ -727,6 +801,72 @@ class User extends CI_Controller {
 		print_r('<pre>'); print_r($array); print_r('</pre>');
 	}
 	
+	public function select()
+	{
+		if (!isset($this->session->userdata['email']))
+		{
+			$this->output->set_header('location: index');
+		}
+		
+		$user_id = $this->session->userdata('user_id');
+		$account_id = $this->session->userdata('account_id');
+		$iscu_id = $this->session->userdata('iscu_id');
+		$result = $this->updates_model->get_active_result();
+		
+		if (!isset($_POST['buttoncheck_name'])) header('location: auditor_home');
+		
+		$button_value = $_POST['buttoncheck_name'];
+		if($button_value==1)
+		{
+			if(isset($_POST['valueselected']))
+			{
+				$this->auditor_verify_page("editable");
+			} else
+			{
+				// header('Location: auditor_verify');
+			}
+		} else if($button_value==2)
+		{
+			
+			if(isset($_POST['valueselected']))
+			{
+			$user_id = $this->session->userdata('user_id'); // previous value = 2;
+			$this->user_db->rejectselected_query($iscu_id, $result['results_id']);
+			header('Location: auditor_verify');
+			} else {
+				header('Location: auditor_verify');
+			}
+		} else if($button_value==3)
+		{
+			$user_id = $this->session->userdata('user_id');
+			$this->user_db->approvevalue_query($iscu_id, $result['results_id']);
+			$this->verify_ratings_update($user_id, $iscu_id);
+			header('Location: auditor_verify');
+			
+		} else if($button_value==4)
+		{
+			// $this->user_db->editvaluesofaccountid($this->session->userdata('iscu_field'));
+			$this->user_db->editvaluesofaccountid($user_id, $iscu_id, $result['results_id']);
+			
+			header('Location: auditor_verify');
+		}
+		
+	}
+	
+	public function logout()
+	{
+		$this->session->sess_destroy();
+		$this->output->set_header('location: index');
+	}
+	
+	public function usertype_checker($site)
+	{
+		if($this->session->userdata('user_type')!=$site)
+		{
+			$this->output->set_header('location: error');
+		}
+	}
+	
 	public function answered_rating_update($user_id, $iscu_id){
 		$iscu = $this->user_db->get_iscu($iscu_id);
 		$result = $this->updates_model->get_active_result();
@@ -734,7 +874,7 @@ class User extends CI_Controller {
 		$fields = $this->user_db->get_all_active_fields();
 		$val = $result['results_name'].": Answered ".count($answered)." out of ".count($fields)." fields for ".$iscu['iscu'].".";
 		
-		$find = $result['results_name']."%: Answered % out of % fields.%";
+		$find = $result['results_name']."%: Answered % out of % fields for ".$iscu['iscu']."%";
 		$found = $this->updates_model->find_update($find);
 		
 		if(count($answered) == count($fields)){
@@ -797,8 +937,17 @@ class User extends CI_Controller {
 		$result = $this->updates_model->get_active_result();
 		$val = $result['results_name'].": Rejected ratings for ".$iscu['iscu'].".";
 		
+		$val2 = $val." Please rate the rejected ratings.";
+		
 		$update_id = $this->updates_model->add_update("'".$val."'", $user_id);
-		$this->updates_model->update_to_all($update_id);
+		$this->updates_model->add_update_iscu_account($update_id, 1, 1); // 1, 1 for superuser
+		$this->updates_model->add_update_iscu_account($update_id, $iscu_id, 3); // 1, 3 for auditor
+		
+		$update_id = $this->updates_model->add_update("'".$val2."'", $user_id);	
+		$this->updates_model->add_update_iscu_account($update_id, $iscu_id, 5); // 5 for user
+		
+		// $update_id = $this->updates_model->add_update("'".$val."'", $user_id);
+		// $this->updates_model->update_to_all($update_id);
 	}
 	
 	public function new_result_update($user_id){

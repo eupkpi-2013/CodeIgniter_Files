@@ -1,10 +1,16 @@
-Output:(5)vv
+Output:(5)asd
 
-KPI	SubKPI	Metric	(1)baseline	(2)another result
-(1)Simplified Operation	(9)Process Standardization across Constituent Universities	(1)No. of standard processes per core system across all CU:	25	0	1	1	100
-(1)Simplified Operation	(10)Student Transactions Done Online	(2)No. of students doing transactions online:	0	10	2	2	56
-(1)Simplified Operation	(10)Student Transactions Done Online	(3)No. of processes online:	0	15	3	3	49
-(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(4)No. of Faculty doing transactions online:	4	4	1
-(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(5)No. of Admin staff and REPS doing transactions online:	5	5	2
-(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(6)Total alumni transactions done online:	6	6	3
+KPI	SubKPI	Metric	IS/CU	(1)baseline
+(1)Simplified Operation	(9)Process Standardization across Constituent Universities	(1)No. of standard processes per core system across all CU	(1001) FMIS:	2
+(1)Simplified Operation	(9)Process Standardization across Constituent Universities	(1)No. of standard processes per core system across all CU	(1002) HRIS:	1
+(1)Simplified Operation	(10)Student Transactions Done Online	(2)No. of students doing transactions online	(1001) FMIS:	2
+(1)Simplified Operation	(10)Student Transactions Done Online	(2)No. of students doing transactions online	(1002) HRIS:	1
+(1)Simplified Operation	(10)Student Transactions Done Online	(3)No. of processes online	(1001) FMIS:	2
+(1)Simplified Operation	(10)Student Transactions Done Online	(3)No. of processes online	(1002) HRIS:	1
+(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(4)No. of Faculty doing transactions online	(1001) FMIS:	2
+(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(4)No. of Faculty doing transactions online	(1002) HRIS:	1
+(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(5)No. of Admin staff and REPS doing transactions online	(1001) FMIS:	2
+(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(5)No. of Admin staff and REPS doing transactions online	(1002) HRIS:	1
+(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(6)Total alumni transactions done online	(1001) FMIS:	2
+(1)Simplified Operation	(11)Faculty, Staff and Alumni Transactions Done Online	(6)Total alumni transactions done online	(1002) HRIS:	1
 --endoffile--
